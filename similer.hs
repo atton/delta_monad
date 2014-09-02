@@ -1,4 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
 data Similer a b = Similer a (a -> b) b
 
 instance Functor (Similer a) where
@@ -22,10 +21,10 @@ twicePlus x = x + x
 plusTwo :: Int -> Int
 plusTwo x = x + 2
 
-same :: Eq b => Similer a b -> b
-same (Similer x f y) = if (f x) == y then y else undefined
+same :: (Show b, Eq b) => Similer a b -> b
+same (Similer x f y) = if (f x) == y then y else (error ("not same :" ++ show y))
 
-similer :: Eq b => (a -> b) -> (a -> b) -> a -> b
+similer :: (Show b, Eq b) => (a -> b) -> (a -> b) -> a -> b
 similer f g x = same $ Similer x g (f x)
 
 
