@@ -1,16 +1,35 @@
-data Similer a b = Similer a (a -> b) b
+{-# LANGUAGE GADTs, MultiParamTypeClasses #-}
 
-instance Functor (Similer a) where
-  fmap g (Similer a f b) = Similer a (g . f) $ g b
+data Similer a = (Eq a) => Similer a (a -> a) a
 
-eq :: (Eq a) => Similer a b -> Similer a b -> Bool
-eq (Similer a _ _ ) (Similer b _ _) = a == b
+instance (Eq a) => Eq (Similer a) where
+  s == ss = same s == same ss
 
+same :: Similer a -> a
+same (Similer x f y) = if (f x) == y then y else undefined
+
+mu :: (Eq a) => Similer (Similer a) -> Similer a
+mu (Similer a f b) = if ((f a) == b) then b else undefined
+
+class EqFunctor f where
+  eqmap :: (Eq a, Eq b) => (a -> b) -> f a -> f b
+
+instance EqFunctor Similer where
+  eqmap f s = Similer fs id fs
+    where fs = f $ same s
+
+class EqMonad m where
+  (>>=) :: (Eq a, Eq b) => m a -> (a -> m b) -> m b
+  return ::(Eq a) =>  a -> m a
+
+instance EqMonad Similer where
+  return x = Similer x id x
+  s >>= f  = mu (eqmap f s)
+
+{-
 eta :: a -> Similer a a
 eta a = Similer a id a
 
-mu :: (Eq b) => Similer a (Similer b c) -> Similer b c
-mu (Similer a f b) = if (eq (f a) b) then b else undefined
 
 double :: Int -> Int
 double x = (2 * x)
@@ -21,8 +40,6 @@ twicePlus x = x + x
 plusTwo :: Int -> Int
 plusTwo x = x + 2
 
-same :: (Show b, Eq b) => Similer a b -> b
-same (Similer x f y) = if (f x) == y then y else (error ("not same :" ++ show y))
 
 similer :: (Show b, Eq b) => (a -> b) -> (a -> b) -> a -> b
 similer f g x = same $ Similer x g (f x)
@@ -32,3 +49,4 @@ similer f g x = same $ Similer x g (f x)
 sameExample            = map (similer twicePlus double)  [1..10]
 nonSameExample         = map (similer twicePlus plusTwo) [1..10]
 nonSameExampleSpecific = map (similer twicePlus plusTwo) [2]
+-}
