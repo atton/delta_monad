@@ -1,11 +1,11 @@
-{-# LANGUAGE GADTs, MultiParamTypeClasses #-}
+{-# LANGUAGE GADTs #-}
 
 data Similer a = (Eq a) => Similer a (a -> a) a
 
 instance (Eq a) => Eq (Similer a) where
   s == ss = same s == same ss
 
-same :: Similer a -> a
+same :: (Eq a) => Similer a -> a
 same (Similer x f y) = if (f x) == y then y else undefined
 
 mu :: (Eq a) => Similer (Similer a) -> Similer a
@@ -26,9 +26,9 @@ instance EqMonad Similer where
   return x = Similer x id x
   s >>= f  = mu (eqmap f s)
 
-{-
-eta :: a -> Similer a a
-eta a = Similer a id a
+similer :: (Eq a) => (a -> a) -> (a -> a) -> a -> a
+similer f g x = same $ Similer x g (f x)
+
 
 
 double :: Int -> Int
@@ -40,13 +40,15 @@ twicePlus x = x + x
 plusTwo :: Int -> Int
 plusTwo x = x + 2
 
-
-similer :: (Show b, Eq b) => (a -> b) -> (a -> b) -> a -> b
-similer f g x = same $ Similer x g (f x)
-
-
 -- samples
-sameExample            = map (similer twicePlus double)  [1..10]
-nonSameExample         = map (similer twicePlus plusTwo) [1..10]
-nonSameExampleSpecific = map (similer twicePlus plusTwo) [2]
+
+{-
+*Main> same $ Main.return 100 Main.>>= (\x -> Similer x twicePlus  $ double x)
+200
+
+*Main> same $ Main.return 2 Main.>>= (\x -> Similer x plusTwo $ double x)
+4
+
+*Main> same $ Main.return 100 Main.>>= (\x -> Similer x plusTwo $ double x)
+*** Exception: Prelude.undefined
 -}
