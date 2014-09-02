@@ -24,3 +24,15 @@ plusTwo x = Similer x double (Similer (x + 2) id (x + 2))
 
 same :: Eq b => Similer a b -> b
 same (Similer x f y) = if (f x) == y then y else undefined
+
+
+-- samples
+
+sameExample :: [Int]
+sameExample = map same $ map (fmap same) $ fmap twicePlus [1..10]
+
+nonSameExample :: [Int]
+nonSameExample = map same $ map (fmap same) $ fmap plusTwo [1..10]
+
+nonSameExampleSpecific :: [Int]
+nonSameExampleSpecific = map same $ map (fmap same) $ fmap plusTwo [2]
