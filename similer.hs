@@ -13,26 +13,23 @@ eta a = Similer a id a
 mu :: (Eq b) => Similer a (Similer b c) -> Similer b c
 mu (Similer a f b) = if (eq (f a) b) then b else undefined
 
-double :: Int -> Similer Int Int
-double x = Similer (2 * x) id (2 * x)
+double :: Int -> Int
+double x = (2 * x)
 
-twicePlus :: Int -> Similer Int (Similer Int Int)
-twicePlus x = Similer x double (Similer (x + x) id $ x + x)
+twicePlus :: Int -> Int
+twicePlus x = x + x
 
-plusTwo :: Int -> Similer Int (Similer Int Int)
-plusTwo x = Similer x double (Similer (x + 2) id (x + 2))
+plusTwo :: Int -> Int
+plusTwo x = x + 2
 
 same :: Eq b => Similer a b -> b
 same (Similer x f y) = if (f x) == y then y else undefined
 
+similer :: Eq b => (a -> b) -> (a -> b) -> a -> b
+similer f g x = same $ Similer x g (f x)
+
 
 -- samples
-
-sameExample :: [Int]
-sameExample = map same $ map (fmap same) $ fmap twicePlus [1..10]
-
-nonSameExample :: [Int]
-nonSameExample = map same $ map (fmap same) $ fmap plusTwo [1..10]
-
-nonSameExampleSpecific :: [Int]
-nonSameExampleSpecific = map same $ map (fmap same) $ fmap plusTwo [2]
+sameExample            = map (similer twicePlus double)  [1..10]
+nonSameExample         = map (similer twicePlus plusTwo) [1..10]
+nonSameExampleSpecific = map (similer twicePlus plusTwo) [2]
