@@ -13,6 +13,14 @@ eta a = Similer a id a
 mu :: (Eq b) => Similer a (Similer b c) -> Similer b c
 mu (Similer a f b) = if (same (f a) b) then b else undefined
 
-instance (Eq a) => Monad (Similer a) where
-        --return x = Similer x id x
-        s >>= f  = mu (fmap f s)
+double :: Int -> Similer Int Int
+double x = Similer (2 * x) id (2 * x)
+
+twicePlus :: Int -> Similer Int (Similer Int Int)
+twicePlus x = Similer x double (Similer (x + x) id $ x + x)
+
+plusTwo :: Int -> Similer Int (Similer Int Int)
+plusTwo x = Similer x double (Similer (x + 2) id (x + 2))
+
+hoge :: Eq b => Similer a b -> b
+hoge (Similer x f y) = if (f x) == y then y else undefined
