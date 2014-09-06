@@ -1,30 +1,20 @@
-{-# LANGUAGE GADTs #-}
-
-data Similar a = (Eq a) => Similar a (a -> a) a
-
-instance (Eq a) => Eq (Similar a) where
-  s == ss = same s == same ss
+data Similar a = Single a | Similar a (Similar a)
 
 same :: (Eq a) => Similar a -> a
-same (Similar x f y) = if (f x) == y then y else undefined
+same (Single x)    = x
+same (Similar x s) = if x == (same s) then x else undefined
+
+instance (Eq a) => Eq (Similar a) where
+    s == ss = (same s) == (same ss)
+
+instance Functor Similar where
+   fmap f (Single a)    = Single (f a)
+   fmap f (Similar a s) = Similar (f a) (fmap f s)
+
+{-
 
 mu :: (Eq a) => Similar (Similar a) -> Similar a
 mu (Similar a f b) = if ((f a) == b) then b else undefined
-
-class EqFunctor f where
-  eqmap :: (Eq a, Eq b) => (a -> b) -> f a -> f b
-
-instance EqFunctor Similar where
-  eqmap f s = Similar fs id fs
-    where fs = f $ same s
-
-class EqMonad m where
-  (>>=) :: (Eq a, Eq b) => m a -> (a -> m b) -> m b
-  return ::(Eq a) =>  a -> m a
-
-instance EqMonad Similar where
-  return x = Similar x id x
-  s >>= f  = mu (eqmap f s)
 
 similar :: (Eq a) => (a -> a) -> (a -> a) -> a -> a
 similar f g x = same $ Similar x g (f x)
@@ -53,3 +43,4 @@ plusTwo x = x + 2
 *** Exception: Prelude.undefined
 -}
 
+-}
