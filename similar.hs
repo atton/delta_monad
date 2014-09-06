@@ -7,22 +7,30 @@ same :: (Eq a) => Similar a -> a
 same (Single x)    = x
 same (Similar x s) = if x == (same s) then x else (error "same")
 
+value :: Similar a -> a
+value (Single x)    = x
+value (Similar x s) = value s
+
+toList :: Similar a -> [a]
+toList (Single x)      = [x]
+toList (Similar x s) = x : (toList s)
+
+toSimilar :: [a] -> Similar a
+toSimilar []   = undefined
+toSimilar (x:[]) = Single x
+toSimilar (x:xs) = Similar x (toSimilar xs)
 
 instance Functor Similar where
    fmap f (Single a)    = Single (f a)
    fmap f (Similar a s) = Similar (f a) (fmap f s)
 
-mu :: (Eq a) => (Similar (Similar a)) -> Similar a
-mu (Single x)                 = x
-mu (Similar (Single x) s)     = Similar x (mu s)
-mu (Similar s ss) = Similar (same s) (mu ss)
+mu :: (Similar (Similar a)) -> Similar a
+mu s =  toSimilar $ concat $ toList $ fmap (toList) s
 
-{-
 instance Monad Similar where
     return              = Single
     (Single x)    >>= f = f x
     (Similar x s) >>= f = mu $ Similar (f x) (fmap f s)
--}
 
 
 
@@ -38,13 +46,37 @@ plusTwo x = Similar (x + 2) (double x)
 -- samples
 
 {-
-*Main> same $ Main.return 100 Main.>>= (\x -> Similar x twicePlus  $ double x)
-200
+- Similar as Functor
+*Main> fmap (double ) (Single 1)
+Single (Single 2)
+*Main> fmap (twicePlus) (Single 1)
+Single (Similar 2 (Single 2))
+*Main> fmap (plusTwo) (Single 1)
+Single (Similar 3 (Single 2))
+*Main> fmap (fmap double)  (fmap (plusTwo   ) (Single 1))
+Single (Similar (Single 6) (Single (Single 4)))
+*Main> same $ fmap same $ fmap (fmap double)  (fmap (plusTwo   ) (Single 1))
+*** Exception: same
+*Main> same $ fmap same $ fmap (fmap double)  (fmap (plusTwo   ) (Single 2))
+Single 8
 
-*Main> same $ Main.return 2 Main.>>= (\x -> Similar x plusTwo $ double x)
-4
+- Similar as Monad
+*Main>  return 100 >>= double  >>= twicePlus
+Similar 400 (Single 400)
+*Main>  return 100 >>= double  >>= twicePlus >>= plusTwo
+Similar 402 (Similar 800 (Similar 402 (Single 800)))
 
-*Main> same $ Main.return 100 Main.>>= (\x -> Similar x plusTwo $ double x)
-*** Exception: Prelude.undefined
+*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo
+*** Exception: same
+*Main> same $  return 100 >>= double  >>= twicePlus
+400
+
+*Main> same $  return 100 >>= double  >>= twicePlus
+400
+*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo 
+*** Exception: same
+*Main> value  $  return 100 >>= double  >>= twicePlus >>= plusTwo 
+800
+
 -}
 
