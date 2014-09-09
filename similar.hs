@@ -1,3 +1,5 @@
+import Control.Applicative
+
 data Similar a = Single a | Similar a (Similar a) deriving (Show)
 
 instance (Eq a) => Eq (Similar a) where
@@ -18,6 +20,11 @@ similar (Similar x s) ss = Similar x (similar s ss)
 instance Functor Similar where
    fmap f (Single a)    = Single (f a)
    fmap f (Similar a s) = Similar (f a) (fmap f s)
+
+instance Applicative Similar where
+    pure                 = Single
+    (Single f)    <*> s  = fmap f s
+    (Similar f s) <*> ss = similar (fmap f ss) (s <*> ss)
 
 mu :: (Similar (Similar a)) -> Similar a
 mu (Single s)     = s
@@ -56,6 +63,14 @@ Single (Similar (Single 6) (Single (Single 4)))
 *** Exception: same
 *Main> same $ fmap same $ fmap (fmap double)  (fmap (plusTwo   ) (Single 2))
 Single 8
+
+- Similar as Applicative Functor
+*Main> Single (\x -> x * x) <*> Single 100
+Single 10000
+*Main> Similar  (\x -> x * x) (Single (\x -> x * 3)) <*> Single 100
+Similar 10000 (Single 300)
+*Main> Similar  (\x -> x * x) (Single (\x -> x * 3)) <*> (Similar 100 (Single 200))
+Similar 10000 (Similar 40000 (Similar 300 (Single 600)))
 
 - Similar as Monad
 *Main>  return 100 >>= double  >>= twicePlus
