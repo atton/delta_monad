@@ -11,21 +11,17 @@ value :: Similar a -> a
 value (Single x)    = x
 value (Similar x s) = value s
 
-toList :: Similar a -> [a]
-toList (Single x)      = [x]
-toList (Similar x s) = x : (toList s)
-
-toSimilar :: [a] -> Similar a
-toSimilar []   = undefined
-toSimilar (x:[]) = Single x
-toSimilar (x:xs) = Similar x (toSimilar xs)
+similar :: Similar a -> Similar a -> Similar a
+similar (Single x) ss    = Similar x ss
+similar (Similar x s) ss = Similar x (similar s ss)
 
 instance Functor Similar where
    fmap f (Single a)    = Single (f a)
    fmap f (Similar a s) = Similar (f a) (fmap f s)
 
 mu :: (Similar (Similar a)) -> Similar a
-mu s =  toSimilar $ concat $ toList $ fmap (toList) s
+mu (Single s)     = s
+mu (Similar s ss) = similar s (mu ss)
 
 instance Monad Similar where
     return              = Single
@@ -33,6 +29,7 @@ instance Monad Similar where
     (Similar x s) >>= f = mu $ Similar (f x) (fmap f s)
 
 
+-- samples
 
 double :: Int -> Similar Int
 double x = Single (2 * x)
@@ -73,9 +70,9 @@ Similar 402 (Similar 800 (Similar 402 (Single 800)))
 
 *Main> same $  return 100 >>= double  >>= twicePlus
 400
-*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo 
+*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo
 *** Exception: same
-*Main> value  $  return 100 >>= double  >>= twicePlus >>= plusTwo 
+*Main> value  $  return 100 >>= double  >>= twicePlus >>= plusTwo
 800
 
 -}
