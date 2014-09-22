@@ -3,33 +3,27 @@ import Data.Numbers.Primes -- $ cabal install primes
 
 data Similar a = Single [String] a | Similar [String] a [String] a deriving (Show)
 
-original :: (Similar a) -> Similar a
-original (Similar xs x _ _) = Single xs x
-original s                  = s
-
-similar :: (Similar a) -> Similar a
-similar (Similar _ _ ys y) = Single ys y
-similar s                  = s
-
-mergeSimilar :: Similar a -> Similar a -> Similar a
-mergeSimilar (Single xs x) (Single ys y) = Similar xs x ys y
+value :: (Similar a) -> Similar a
+value (Similar xs x _ _) = Single xs x
+value s                  = s
 
 instance (Eq a) => Eq (Similar a) where
-    s == ss = (original s) == (original ss)
+    s == ss = (value s) == (value ss)
 
 instance Functor Similar where
     fmap f (Single xs x)       = Single  xs (f x)
     fmap f (Similar xs x ys y) = Similar xs (f x) ys (f y)
 
-similarLogAppend :: [String] -> Similar a -> Similar a
-similarLogAppend ls (Single xs x)       = Single  (ls ++ xs) x
-similarLogAppend ls (Similar xs x ys y) = Similar (ls ++ xs) x (ls ++ ys) y
-
+mu :: Similar (Similar a) -> Similar a
+mu (Single  ls (Single lx x))                              = Single  (ls ++ lx)  x
+mu (Single  ls (Similar lx x ly y))                        = Similar (ls ++ lx)  x (ls ++ ly)  y
+mu (Similar lx (Single llx x) ly (Single lly y))           = Similar (lx ++ llx) x (ly ++ lly) y
+mu (Similar lx (Similar llx x _ _) ly (Similar _ _ lly y)) = Similar (lx ++ llx) x (lx ++ lly) y
+mu _                                                       = error "Invalid Similar"
 
 instance Monad Similar where
-    return                    = Single []
-    (Single  xs x)      >>= f = similarLogAppend xs (original (f x))
-    (Similar xs x ys y) >>= f = mergeSimilar (similarLogAppend xs (original (f x))) (similarLogAppend ys (similar (f y)))
+    return  = Single []
+    s >>= f = mu $ fmap f s
 
 
 {-
