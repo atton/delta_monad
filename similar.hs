@@ -3,9 +3,13 @@ import Data.Numbers.Primes -- $ cabal install primes
 
 data Similar a = Single [String] a | Similar [String] a [String] a deriving (Show)
 
-value :: (Similar a) -> Similar a
-value (Similar xs x _ _) = Single xs x
-value s                  = s
+value :: (Similar a) -> a
+value (Single  _ x)     = x
+value (Similar _ x _ _) = x
+
+similar :: (Similar a) -> a
+similar (Single  _ x)     = x
+similar (Similar _ _ _ y) = y
 
 instance (Eq a) => Eq (Similar a) where
     s == ss = (value s) == (value ss)
@@ -21,8 +25,6 @@ instance Applicative Similar where
     (Similar lf f lg g) <*> (Single lx x)       = Similar (lf ++ lx) (f x) (lg ++ lx) (g x)
     (Similar lf f lg g) <*> (Similar lx x ly y) = Similar (lf ++ lx) (f x) (lg ++ ly) (g y)
 
-
-
 mu :: Similar (Similar a) -> Similar a
 mu (Single  ls (Single lx x))                              = Single  (ls ++ lx)  x
 mu (Single  ls (Similar lx x ly y))                        = Similar (ls ++ lx)  x (ls ++ ly)  y
@@ -35,106 +37,22 @@ instance Monad Similar where
     s >>= f = mu $ fmap f s
 
 
-{-
-
 
 
 -- samples
-{-
 
 generator :: Int -> Similar [Int]
-generator x = return [1..x]
+generator x = let intList = [1..x] in
+                  Single [(show intList)] intList
 
 primeFilter :: [Int] -> Similar [Int]
-primeFilter xs = return $ filter isPrime xs
+primeFilter xs = let primeList    = filter isPrime xs
+                     refactorList = filter even xs     in
+                 Similar [(show primeList)] primeList [(show refactorList)] refactorList
 
 count :: [Int] -> Similar Int
-count xs = return $ length xs
+count xs = let primeCount = length xs in
+           Single [(show primeCount)] primeCount
 
-primeCount :: Int -> Int
-primeCount x = value $ generator x >>= primeFilter >>= count
--}
-
-
-{-
-same :: (Eq a) => Similar a -> a
-same (Single x)    = x
-same (Similar x s) = if x == (same s) then x else (error "same")
-
-
-similar :: Similar a -> Similar a -> Similar a
-similar (Single x) ss    = Similar x ss
-similar (Similar x s) ss = Similar x (similar s ss)
-
-instance Functor Similar where
-   fmap f (Single a)    = Single (f a)
-   fmap f (Similar a s) = Similar (f a) (fmap f s)
-
-instance Applicative Similar where
-    pure                 = Single
-    (Single f)    <*> s  = fmap f s
-    (Similar f s) <*> ss = similar (fmap f ss) (s <*> ss)
-
-mu :: (Similar (Similar a)) -> Similar a
-mu (Single s)     = s
-mu (Similar s ss) = similar s (mu ss)
-
-
-
--- samples
-
-double :: Int -> Similar Int
-double x = Single (2 * x)
-
-twicePlus :: Int -> Similar Int
-twicePlus x = Similar (x + x) (double x)
-
-plusTwo :: Int -> Similar Int
-plusTwo x = Similar (x + 2) (double x)
-
--- samples
-
-{-
-- Similar as Functor
-*Main> fmap (double ) (Single 1)
-Single (Single 2)
-*Main> fmap (twicePlus) (Single 1)
-Single (Similar 2 (Single 2))
-*Main> fmap (plusTwo) (Single 1)
-Single (Similar 3 (Single 2))
-*Main> fmap (fmap double)  (fmap (plusTwo   ) (Single 1))
-Single (Similar (Single 6) (Single (Single 4)))
-*Main> same $ fmap same $ fmap (fmap double)  (fmap (plusTwo   ) (Single 1))
-*** Exception: same
-*Main> same $ fmap same $ fmap (fmap double)  (fmap (plusTwo   ) (Single 2))
-Single 8
-
-- Similar as Applicative Functor
-*Main> Single (\x -> x * x) <*> Single 100
-Single 10000
-*Main> Similar  (\x -> x * x) (Single (\x -> x * 3)) <*> Single 100
-Similar 10000 (Single 300)
-*Main> Similar  (\x -> x * x) (Single (\x -> x * 3)) <*> (Similar 100 (Single 200))
-Similar 10000 (Similar 40000 (Similar 300 (Single 600)))
-
-- Similar as Monad
-*Main>  return 100 >>= double  >>= twicePlus
-Similar 400 (Single 400)
-*Main>  return 100 >>= double  >>= twicePlus >>= plusTwo
-Similar 402 (Similar 800 (Similar 402 (Single 800)))
-
-*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo
-*** Exception: same
-*Main> same $  return 100 >>= double  >>= twicePlus
-400
-
-*Main> same $  return 100 >>= double  >>= twicePlus
-400
-*Main> same $  return 100 >>= double  >>= twicePlus >>= plusTwo
-*** Exception: same
-*Main> value  $  return 100 >>= double  >>= twicePlus >>= plusTwo
-800
-
--}
--}
--}
+primeCount :: Int -> Similar Int
+primeCount x = generator x >>= primeFilter >>= count
