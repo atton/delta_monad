@@ -14,6 +14,15 @@ instance Functor Similar where
     fmap f (Single xs x)       = Single  xs (f x)
     fmap f (Similar xs x ys y) = Similar xs (f x) ys (f y)
 
+instance Applicative Similar where
+    pure                                        = Single []
+    (Single lf f)       <*> (Single lx x)       = Single  (lf ++ lx) (f x)
+    (Single lf f)       <*> (Similar lx x ly y) = Similar (lf ++ lx) (f x) (lf ++ ly) (f y)
+    (Similar lf f lg g) <*> (Single lx x)       = Similar (lf ++ lx) (f x) (lg ++ lx) (g x)
+    (Similar lf f lg g) <*> (Similar lx x ly y) = Similar (lf ++ lx) (f x) (lg ++ ly) (g y)
+
+
+
 mu :: Similar (Similar a) -> Similar a
 mu (Single  ls (Single lx x))                              = Single  (ls ++ lx)  x
 mu (Single  ls (Similar lx x ly y))                        = Similar (ls ++ lx)  x (ls ++ ly)  y
