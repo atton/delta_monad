@@ -30,6 +30,9 @@ instance Monad Similar where
 returnS :: (Show s) => s -> Similar s
 returnS x = Similar [(show x)] x [(show x)] x
 
+returnSS :: (Show s) => s -> s -> Similar s
+returnSS x y = Similar [(show x)] x [(show y)] y
+
 -- samples
 
 generator :: Int -> Similar [Int]
@@ -38,8 +41,8 @@ generator x = let intList = [1..x] in
 
 primeFilter :: [Int] -> Similar [Int]
 primeFilter xs = let primeList    = filter isPrime xs
-                     refactorList = filter even xs     in
-                 Similar [(show primeList)] primeList [(show refactorList)] refactorList
+                     refactorList = filter even xs    in
+                 returnSS primeList refactorList
 
 count :: [Int] -> Similar Int
 count xs = let primeCount = length xs in
