@@ -1,10 +1,12 @@
+open import Level
+
 module basic where
 
-id : {A : Set} -> A -> A
+id : {l : Level} {A : Set} -> A -> A
 id x = x
 
-_∙_ : {A B C : Set} -> (A -> B) -> (B -> C) -> (A -> C)
-f ∙ g = \x -> g (f x)
+_∙_ : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} -> (B -> C) -> (A -> B) -> (A -> C)
+f ∙ g = \x -> f (g x)
 
 postulate String : Set
 postulate show   : {A : Set} -> A -> String
