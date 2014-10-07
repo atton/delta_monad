@@ -14,6 +14,9 @@ _++_ : {A : Set} -> List A -> List A -> List A
 []        ++ ys = ys
 (x :: xs) ++ ys = x :: (xs ++ ys)
 
+[[_]] : {A : Set} -> A -> List A
+[[ x ]] = x :: []
+
 
 empty-append : {A : Set} -> (xs : List A) -> xs ++ [] ≡ [] ++ xs
 empty-append [] = refl
