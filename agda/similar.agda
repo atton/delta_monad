@@ -27,16 +27,28 @@ returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 
 --monad-law-1 : mu ∙ (fmap mu) ≡ mu ∙ mu
 
+{-
 monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
 monad-law-1 s = begin
     ((mu ∙ (fmap mu)) s)
   ≡⟨⟩
     mu (fmap mu s)
-  ≡⟨ {!!} ⟩
-     mu (mu s)
+  ≡⟨ cong mu {!!} ⟩
+    mu (mu s)
   ≡⟨⟩
     ((mu ∙ mu) s)
   ∎
+-}
+
+monad-law-1-sub : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> fmap mu s ≡ mu s
+monad-law-1-sub (similar lx (similar llx (similar lllx x _ _) _ _) ly (similar _ _ lly (similar _ _ llly y))) = begin
+    similar lx (mu (similar llx (similar lllx x _ _) _ _)) ly
+      (mu (similar _ _ lly (similar _ _ llly y)))
+  ≡⟨ {!!} ⟩
+    similar (lx ++ llx) (similar lllx x _ _) (ly ++ lly)
+      (similar _ _ llly y)
+  ∎
+
 
 
 
