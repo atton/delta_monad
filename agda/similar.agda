@@ -1,6 +1,11 @@
 open import list
+open import Relation.Binary.PropositionalEquality
+open ≡-Reasoning
 
 module similar where
+
+id : {A : Set} -> A -> A
+id x = x
 
 postulate String : Set
 postulate show   : {A : Set} -> A -> String
@@ -16,6 +21,9 @@ fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
 mu : {A : Set} -> Similar (Similar A) -> Similar A
 mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
 
+return : {A : Set} -> A -> Similar A
+return x = similar [] x [] x
+
 returnS : {A : Set} -> A -> Similar A
 returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
 
@@ -23,3 +31,21 @@ returnSS : {A : Set} -> A -> A -> Similar A
 returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 
 
+_∙_ : {A B C : Set} -> (A -> B) -> (B -> C) -> (A -> C)
+f ∙ g = \x -> g (f x)
+
+monad-law-1 : mu ∙ (fmap mu) ≡ mu ∙ mu
+monad-law-1 = {!!} 
+
+--monad-law-2 : mu ∙ fmap return ≡ mu ∙ return ≡id
+monad-law-2-1 : mu ∙ fmap return ≡ mu ∙ return
+monad-law-2-1 = {!!}
+
+monad-law-2-2 : mu ∙ return ≡ id
+monad-law-2-2 = {!!}
+
+monad-law-3 : ∀{f} -> return ∙ f ≡ fmap f ∙ return
+monad-law-3 = {!!} 
+
+monad-law-4 : ∀{f} -> mu ∙ fmap (fmap f) ≡ fmap f ∙ mu
+monad-law-4 = {!!} 
