@@ -25,14 +25,15 @@ returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
 returnSS : {A : Set} -> A -> A -> Similar A
 returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 
+
 --monad-law-1 : mu ∙ (fmap mu) ≡ mu ∙ mu
-
-
 monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
 monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _)) 
                      ly (similar   _ (similar _ _ _ _)  lly (similar _ _  llly y))) = begin
     similar (lx ++ (llx ++ lllx)) x (ly ++ (lly ++ llly)) y
-  ≡⟨ {!!} ⟩
+  ≡⟨ cong (\left-list -> similar left-list x (ly ++ (lly ++ llly)) y) (list-associative lx llx lllx) ⟩
+    similar (lx ++ llx ++ lllx) x (ly ++ (lly ++ llly)) y
+  ≡⟨ cong (\right-list -> similar (lx ++ llx ++ lllx) x right-list y ) (list-associative ly lly llly) ⟩
     similar (lx ++ llx ++ lllx) x (ly ++ lly ++ llly) y
   ∎
 
