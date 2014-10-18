@@ -16,7 +16,7 @@ fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
 mu : {l : Level} {A : Set l} -> Similar (Similar A) -> Similar A
 mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
 
-return : {A : Set} -> A -> Similar A
+return : {l : Level} {A : Set l} -> A -> Similar A
 return x = similar [] x [] x
 
 returnS : {A : Set} -> A -> Similar A
@@ -37,11 +37,19 @@ monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
     similar (lx ++ llx ++ lllx) x (ly ++ lly ++ llly) y
   ∎
 
-{-
---monad-law-2 : mu ∙ fmap return ≡ mu ∙ return ≡id
-monad-law-2-1 : mu ∙ fmap return ≡ mu ∙ return
-monad-law-2-1 = {!!}
 
+--monad-law-2 : mu ∙ fmap return ≡ mu ∙ return ≡ id
+monad-law-2-1 : {l : Level} {A : Set l} -> (s : Similar  A) ->
+  (mu ∙ fmap return) s ≡ (mu ∙ return) s
+monad-law-2-1 (similar lx x ly y) = begin
+    similar (lx ++ []) x (ly ++ []) y
+  ≡⟨ cong (\left-list -> similar left-list x (ly ++ []) y) (empty-append lx)⟩
+    similar lx x (ly ++ []) y
+  ≡⟨ cong (\right-list -> similar lx x right-list y) (empty-append ly) ⟩
+    similar lx x ly y
+  ∎
+
+{-
 monad-law-2-2 : mu ∙ return ≡ id
 monad-law-2-2 = {!!}
 
