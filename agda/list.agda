@@ -25,3 +25,8 @@ empty-append (x :: xs) = begin
   ≡⟨ cong (_::_ x) (empty-append xs) ⟩
     x :: xs
   ∎
+
+
+list-associative : {A : Set} -> (a b c : List A) -> (a ++ (b ++ c)) ≡ ((a ++ b) ++ c)
+list-associative [] b c = refl
+list-associative (x :: a) b c = cong (_::_ x) (list-associative a b c)
