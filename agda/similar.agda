@@ -49,10 +49,10 @@ monad-law-2-1 (similar lx x ly y) = begin
     similar lx x ly y
   ∎
 
-{-
-monad-law-2-2 : mu ∙ return ≡ id
-monad-law-2-2 = {!!}
+monad-law-2-2 : {l : Level} {A : Set l } -> (s : Similar A) -> (mu ∙ return) s ≡ id s
+monad-law-2-2 (similar lx x ly y) = refl
 
+{-
 monad-law-3 : ∀{f} -> return ∙ f ≡ fmap f ∙ return
 monad-law-3 = {!!}
 
