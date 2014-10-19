@@ -34,7 +34,8 @@ returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 return : {l : Level} {A : Set l} -> A -> Similar A
 return = eta
 
-_>>=_ : {l ll : Level} {A : Set l} {B : Set ll} -> 
+
+_>>=_ : {l ll : Level} {A : Set l} {B : Set ll} ->
         (x : Similar A) -> (f : A -> (Similar B)) -> (Similar B)
 x >>= f = mu (fmap f x)
 
@@ -61,7 +62,7 @@ functor-law-2 f g (similar lx x ly y) = refl
 
 -- monad-law-1 : join . fmap join = join . join
 monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
-monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _)) 
+monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
                      ly (similar   _ (similar _ _ _ _)  lly (similar _ _  llly y))) = begin
     similar (lx ++ (llx ++ lllx)) x (ly ++ (lly ++ llly)) y
   ≡⟨ cong (\left-list -> similar left-list x (ly ++ (lly ++ llly)) y) (list-associative lx llx lllx) ⟩
@@ -100,7 +101,7 @@ monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
 -- Monad-laws (Haskell)
 -- monad-law-h-1 : return a >>= k  =  k a
 monad-law-h-1 : {l ll : Level} {A : Set l} {B : Set ll} ->
-                (a : A) -> (k : A -> (Similar B)) -> 
+                (a : A) -> (k : A -> (Similar B)) ->
                 (return a >>= k)  ≡ (k a)
 monad-law-h-1 a k = begin
     return a >>= k
@@ -119,4 +120,35 @@ monad-law-h-1 a k = begin
   ∎
 
 -- monad-law-h-2 : m >>= return  =  m
--- monad-law-h-3 : m >>= (× -> k x >>= h)  =  (m >>= k) >>= h
+monad-law-h-2 : {l : Level}{A : Set l} -> (m : Similar A) -> (m >>= return)  ≡ m
+monad-law-h-2 (similar lx x ly y) = monad-law-2-1 (similar lx x ly y)
+
+
+-- monad-law-h-3 : m >>= (\x -> k x >>= h)  =  (m >>= k) >>= h
+monad-law-h-3 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
+                (m : Similar A)  -> (k : A -> (Similar B)) -> (h : B -> (Similar C)) ->
+                (m >>= (\x -> k x >>= h)) ≡ ((m >>= k) >>= h)
+monad-law-h-3 (similar lx x ly y) k h = begin
+    ((similar lx x ly y) >>= (\x -> (k x) >>= h))
+  ≡⟨ refl ⟩
+    mu (fmap (\x -> k x >>= h) (similar lx x ly y))
+  ≡⟨ refl ⟩
+    (mu ∙ fmap (\x -> k x >>= h)) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ fmap (\x -> mu (fmap h (k x)))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ fmap (mu ∙ (\x -> fmap h (k x)))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ (fmap mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    --(mu ∙ (mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
+    {!!}
+  ≡⟨ {!!} ⟩
+    (mu ∙ fmap h) (mu (fmap k (similar lx x ly y)))
+  ≡⟨ refl ⟩
+    mu (fmap h (mu (fmap k (similar lx x ly y))))
+  ≡⟨ refl ⟩
+    (mu (fmap k (similar lx x ly y))) >>= h
+  ≡⟨ refl ⟩
+    ((similar lx x ly y) >>= k) >>= h
+  ∎
