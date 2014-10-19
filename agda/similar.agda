@@ -10,21 +10,45 @@ module similar where
 data Similar {l : Level} (A : Set l) : (Set (suc l)) where
   similar : List String -> A -> List String -> A -> Similar A
 
+
+-- Functor
 fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Similar A) -> (Similar B)
 fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
 
+
+-- Monad
 mu : {l : Level} {A : Set l} -> Similar (Similar A) -> Similar A
 mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
 
 return : {l : Level} {A : Set l} -> A -> Similar A
 return x = similar [] x [] x
 
-returnS : {A : Set} -> A -> Similar A
+returnS : {l : Level} {A : Set l} -> A -> Similar A
 returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
 
-returnSS : {A : Set} -> A -> A -> Similar A
+returnSS : {l : Level} {A : Set l} -> A -> A -> Similar A
 returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 
+
+
+-- proofs
+
+
+-- Functor-laws
+
+-- Functor-law-1 : T(id) = id'
+functor-law-1 :  {l : Level} {A : Set l} ->  (s : Similar A) -> (fmap id) s ≡ id s
+functor-law-1 (similar lx x ly y) = refl
+
+-- Functor-law-2 : T(f . g) = T(f) . T(g)
+functor-law-2 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
+                (f : B -> C) -> (g : A -> B) -> (s : Similar A) ->
+                (fmap (f ∙ g)) s ≡ ((fmap f) ∙ (fmap g)) s
+functor-law-2 f g (similar lx x ly y) = refl
+
+
+
+-- Monad-laws
 
 --monad-law-1 : mu ∙ (fmap mu) ≡ mu ∙ mu
 monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
