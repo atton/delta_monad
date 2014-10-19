@@ -16,18 +16,27 @@ fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Similar A) -> (Si
 fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
 
 
--- Monad
+-- Monad (Category)
 mu : {l : Level} {A : Set l} -> Similar (Similar A) -> Similar A
 mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
 
-return : {l : Level} {A : Set l} -> A -> Similar A
-return x = similar [] x [] x
+eta : {l : Level} {A : Set l} -> A -> Similar A
+eta x = similar [] x [] x
 
 returnS : {l : Level} {A : Set l} -> A -> Similar A
 returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
 
 returnSS : {l : Level} {A : Set l} -> A -> A -> Similar A
 returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
+
+
+-- Monad (Haskell)
+return : {l : Level} {A : Set l} -> A -> Similar A
+return = eta
+
+_>>=_ : {l ll : Level} {A : Set l} {B : Set ll} -> 
+        (x : Similar A) -> (f : A -> (Similar B)) -> (Similar B)
+x >>= f = mu (fmap f x)
 
 
 
@@ -65,7 +74,7 @@ monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
 -- monad-law-2 : join . fmap return = join . return = id
 -- monad-law-2-1 join . fmap return = join . return
 monad-law-2-1 : {l : Level} {A : Set l} -> (s : Similar  A) ->
-  (mu ∙ fmap return) s ≡ (mu ∙ return) s
+  (mu ∙ fmap eta) s ≡ (mu ∙ eta) s
 monad-law-2-1 (similar lx x ly y) = begin
     similar (lx ++ []) x (ly ++ []) y
   ≡⟨ cong (\left-list -> similar left-list x (ly ++ []) y) (empty-append lx)⟩
@@ -75,14 +84,39 @@ monad-law-2-1 (similar lx x ly y) = begin
   ∎
 
 -- monad-law-2-2 :  join . return = id
-monad-law-2-2 : {l : Level} {A : Set l } -> (s : Similar A) -> (mu ∙ return) s ≡ id s
+monad-law-2-2 : {l : Level} {A : Set l } -> (s : Similar A) -> (mu ∙ eta) s ≡ id s
 monad-law-2-2 (similar lx x ly y) = refl
 
 -- monad-law-3 : return . f = fmap f . return
-monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (return ∙ f) x ≡ (fmap f ∙ return) x
+monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (eta ∙ f) x ≡ (fmap f ∙ eta) x
 monad-law-3 f x = refl
 
 -- monad-law-4 : join . fmap (fmap f) = fmap f . join
 monad-law-4 : {l : Level} {A B : Set l} (f : A -> B) (s : Similar (Similar A)) ->
               (mu ∙ fmap (fmap f)) s ≡ (fmap f ∙ mu) s
 monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
+
+
+-- Monad-laws (Haskell)
+-- monad-law-h-1 : return a >>= k  =  k a
+monad-law-h-1 : {l ll : Level} {A : Set l} {B : Set ll} ->
+                (a : A) -> (k : A -> (Similar B)) -> 
+                (return a >>= k)  ≡ (k a)
+monad-law-h-1 a k = begin
+    return a >>= k
+  ≡⟨ refl ⟩
+    mu (fmap k (return a))
+  ≡⟨ refl ⟩
+    mu (return (k a))
+  ≡⟨ refl ⟩
+    (mu ∙ return) (k a)
+  ≡⟨ refl ⟩
+    (mu ∙ eta) (k a)
+  ≡⟨ (monad-law-2-2 (k a)) ⟩
+    id (k a)
+  ≡⟨ refl ⟩
+    k a
+  ∎
+
+-- monad-law-h-2 : m >>= return  =  m
+-- monad-law-h-3 : m >>= (× -> k x >>= h)  =  (m >>= k) >>= h
