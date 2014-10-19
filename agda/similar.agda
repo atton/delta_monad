@@ -48,9 +48,9 @@ functor-law-2 f g (similar lx x ly y) = refl
 
 
 
--- Monad-laws
+-- Monad-laws (Category)
 
---monad-law-1 : mu ∙ (fmap mu) ≡ mu ∙ mu
+-- monad-law-1 : join . fmap join = join . join
 monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
 monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _)) 
                      ly (similar   _ (similar _ _ _ _)  lly (similar _ _  llly y))) = begin
@@ -62,7 +62,8 @@ monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
   ∎
 
 
---monad-law-2 : mu ∙ fmap return ≡ mu ∙ return ≡ id
+-- monad-law-2 : join . fmap return = join . return = id
+-- monad-law-2-1 join . fmap return = join . return
 monad-law-2-1 : {l : Level} {A : Set l} -> (s : Similar  A) ->
   (mu ∙ fmap return) s ≡ (mu ∙ return) s
 monad-law-2-1 (similar lx x ly y) = begin
@@ -73,14 +74,15 @@ monad-law-2-1 (similar lx x ly y) = begin
     similar lx x ly y
   ∎
 
+-- monad-law-2-2 :  join . return = id
 monad-law-2-2 : {l : Level} {A : Set l } -> (s : Similar A) -> (mu ∙ return) s ≡ id s
 monad-law-2-2 (similar lx x ly y) = refl
 
-
+-- monad-law-3 : return . f = fmap f . return
 monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (return ∙ f) x ≡ (fmap f ∙ return) x
 monad-law-3 f x = refl
 
-
+-- monad-law-4 : join . fmap (fmap f) = fmap f . join
 monad-law-4 : {l : Level} {A B : Set l} (f : A -> B) (s : Similar (Similar A)) ->
               (mu ∙ fmap (fmap f)) s ≡ (fmap f ∙ mu) s
 monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
