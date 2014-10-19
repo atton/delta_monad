@@ -9,4 +9,4 @@ _∙_ : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} -> (B -> C) ->
 f ∙ g = \x -> f (g x)
 
 postulate String : Set
-postulate show   : {A : Set} -> A -> String
+postulate show   : {l : Level} {A : Set l} -> A -> String

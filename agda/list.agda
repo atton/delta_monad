@@ -1,24 +1,25 @@
 module list where
 
+open import Level
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
 infixr 40 _::_
-data  List (A : Set) : Set where
+data  List {l : Level} (A : Set l) : (Set l)where
    [] : List A
    _::_ : A -> List A -> List A
 
 
 infixl 30 _++_
-_++_ : {A : Set} -> List A -> List A -> List A
+_++_ : {l : Level} {A : Set l} -> List A -> List A -> List A
 []        ++ ys = ys
 (x :: xs) ++ ys = x :: (xs ++ ys)
 
-[[_]] : {A : Set} -> A -> List A
+[[_]] : {l : Level} {A : Set l} -> A -> List A
 [[ x ]] = x :: []
 
 
-empty-append : {A : Set} -> (xs : List A) -> xs ++ [] ≡ [] ++ xs
+empty-append : {l : Level} {A : Set l} -> (xs : List A) -> xs ++ [] ≡ [] ++ xs
 empty-append [] = refl
 empty-append (x :: xs) = begin
     x :: (xs ++ [])
@@ -27,6 +28,6 @@ empty-append (x :: xs) = begin
   ∎
 
 
-list-associative : {A : Set} -> (a b c : List A) -> (a ++ (b ++ c)) ≡ ((a ++ b) ++ c)
+list-associative : {l : Level} {A : Set l} -> (a b c : List A) -> (a ++ (b ++ c)) ≡ ((a ++ b) ++ c)
 list-associative [] b c = refl
 list-associative (x :: a) b c = cong (_::_ x) (list-associative a b c)
