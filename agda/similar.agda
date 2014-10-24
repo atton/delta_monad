@@ -93,7 +93,7 @@ monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (eta ∙ f) x �
 monad-law-3 f x = refl
 
 -- monad-law-4 : join . fmap (fmap f) = fmap f . join
-monad-law-4 : {l : Level} {A B : Set l} (f : A -> B) (s : Similar (Similar A)) ->
+monad-law-4 : {l ll : Level} {A : Set l} {B : Set ll} (f : A -> B) (s : Similar (Similar A)) ->
               (mu ∙ fmap (fmap f)) s ≡ (fmap f ∙ mu) s
 monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
 
@@ -123,7 +123,6 @@ monad-law-h-1 a k = begin
 monad-law-h-2 : {l : Level}{A : Set l} -> (m : Similar A) -> (m >>= return)  ≡ m
 monad-law-h-2 (similar lx x ly y) = monad-law-2-1 (similar lx x ly y)
 
-
 -- monad-law-h-3 : m >>= (\x -> k x >>= h)  =  (m >>= k) >>= h
 monad-law-h-3 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
                 (m : Similar A)  -> (k : A -> (Similar B)) -> (h : B -> (Similar C)) ->
@@ -141,9 +140,22 @@ monad-law-h-3 (similar lx x ly y) k h = begin
   ≡⟨ refl ⟩
     (mu ∙ (fmap mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
   ≡⟨ refl ⟩
-    --(mu ∙ (mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
-    {!!}
-  ≡⟨ {!!} ⟩
+    (mu ∙ (fmap mu)) ((fmap (\x -> fmap h (k x))) (similar lx x ly y))
+  ≡⟨ monad-law-1 (((fmap (\x -> fmap h (k x))) (similar lx x ly y))) ⟩
+    (mu ∙ mu) ((fmap (\x -> fmap h (k x))) (similar lx x ly y)) 
+  ≡⟨ refl ⟩
+    (mu ∙ (mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ (mu ∙ (fmap ((fmap h) ∙ k)))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ (mu ∙ ((fmap (fmap h)) ∙ (fmap k)))) (similar lx x ly y)
+  ≡⟨ refl ⟩
+    (mu ∙ (mu ∙ (fmap (fmap h)))) (fmap k (similar lx x ly y))
+  ≡⟨ refl ⟩
+    mu ((mu ∙ (fmap (fmap h))) (fmap k (similar lx x ly y)))
+  ≡⟨ cong (\fx -> mu fx) (monad-law-4 h (fmap k (similar lx x ly y))) ⟩
+    mu (fmap h (mu (similar lx (k x) ly (k y))))
+  ≡⟨ refl ⟩
     (mu ∙ fmap h) (mu (fmap k (similar lx x ly y)))
   ≡⟨ refl ⟩
     mu (fmap h (mu (fmap k (similar lx x ly y))))
