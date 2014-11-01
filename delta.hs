@@ -1,0 +1,52 @@
+import Control.Applicative
+import Data.Numbers.Primes -- $ cabal install primes
+
+data Delta a = Delta [String] a [String] a deriving (Show)
+
+value :: (Delta a) -> a
+value (Delta _ x _ _) = x
+
+similar :: (Delta a) -> a
+similar (Delta _ _ _ y) = y
+
+instance (Eq a) => Eq (Delta a) where
+    s == ss = (value s) == (value ss)
+
+instance Functor Delta where
+    fmap f (Delta xs x ys y) = Delta xs (f x) ys (f y)
+
+instance Applicative Delta where
+    pure f                                      = Delta [] f [] f
+    (Delta lf f lg g) <*> (Delta lx x ly y) = Delta (lf ++ lx) (f x) (lg ++ ly) (g y)
+
+mu :: Delta (Delta a) -> Delta a
+mu (Delta lx (Delta llx x _ _) ly (Delta _ _ lly y)) = Delta (lx ++ llx) x (ly ++ lly) y
+
+instance Monad Delta where
+    return x = Delta [] x [] x
+    s >>= f  = mu $ fmap f s
+
+
+returnS :: (Show s) => s -> Delta s
+returnS x = Delta [(show x)] x [(show x)] x
+
+returnSS :: (Show s) => s -> s -> Delta s
+returnSS x y = Delta [(show x)] x [(show y)] y
+
+-- samples
+
+generator :: Int -> Delta [Int]
+generator x = let intList = [1..x] in
+                  returnS intList
+
+primeFilter :: [Int] -> Delta [Int]
+primeFilter xs = let primeList    = filter isPrime xs
+                     refactorList = filter even xs    in
+                 returnSS primeList refactorList
+
+count :: [Int] -> Delta Int
+count xs = let primeCount = length xs in
+           returnS primeCount
+
+primeCount :: Int -> Delta Int
+primeCount x = generator x >>= primeFilter >>= count

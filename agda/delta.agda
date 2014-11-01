@@ -5,38 +5,38 @@ open import Level
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
-module similar where
+module delta where
 
-data Similar {l : Level} (A : Set l) : (Set (suc l)) where
-  similar : List String -> A -> List String -> A -> Similar A
+data Delta {l : Level} (A : Set l) : (Set (suc l)) where
+  similar : List String -> A -> List String -> A -> Delta A
 
 
 -- Functor
-fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Similar A) -> (Similar B)
+fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
 fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
 
 
 -- Monad (Category)
-mu : {l : Level} {A : Set l} -> Similar (Similar A) -> Similar A
+mu : {l : Level} {A : Set l} -> Delta (Delta A) -> Delta A
 mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
 
-eta : {l : Level} {A : Set l} -> A -> Similar A
+eta : {l : Level} {A : Set l} -> A -> Delta A
 eta x = similar [] x [] x
 
-returnS : {l : Level} {A : Set l} -> A -> Similar A
+returnS : {l : Level} {A : Set l} -> A -> Delta A
 returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
 
-returnSS : {l : Level} {A : Set l} -> A -> A -> Similar A
+returnSS : {l : Level} {A : Set l} -> A -> A -> Delta A
 returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
 
 
 -- Monad (Haskell)
-return : {l : Level} {A : Set l} -> A -> Similar A
+return : {l : Level} {A : Set l} -> A -> Delta A
 return = eta
 
 
 _>>=_ : {l ll : Level} {A : Set l} {B : Set ll} ->
-        (x : Similar A) -> (f : A -> (Similar B)) -> (Similar B)
+        (x : Delta A) -> (f : A -> (Delta B)) -> (Delta B)
 x >>= f = mu (fmap f x)
 
 
@@ -47,12 +47,12 @@ x >>= f = mu (fmap f x)
 -- Functor-laws
 
 -- Functor-law-1 : T(id) = id'
-functor-law-1 :  {l : Level} {A : Set l} ->  (s : Similar A) -> (fmap id) s ≡ id s
+functor-law-1 :  {l : Level} {A : Set l} ->  (s : Delta A) -> (fmap id) s ≡ id s
 functor-law-1 (similar lx x ly y) = refl
 
 -- Functor-law-2 : T(f . g) = T(f) . T(g)
 functor-law-2 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
-                (f : B -> C) -> (g : A -> B) -> (s : Similar A) ->
+                (f : B -> C) -> (g : A -> B) -> (s : Delta A) ->
                 (fmap (f ∙ g)) s ≡ ((fmap f) ∙ (fmap g)) s
 functor-law-2 f g (similar lx x ly y) = refl
 
@@ -61,7 +61,7 @@ functor-law-2 f g (similar lx x ly y) = refl
 -- Monad-laws (Category)
 
 -- monad-law-1 : join . fmap join = join . join
-monad-law-1 : {l : Level} {A : Set l} -> (s : Similar (Similar (Similar A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
+monad-law-1 : {l : Level} {A : Set l} -> (s : Delta (Delta (Delta A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
 monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
                      ly (similar   _ (similar _ _ _ _)  lly (similar _ _  llly y))) = begin
     similar (lx ++ (llx ++ lllx)) x (ly ++ (lly ++ llly)) y
@@ -74,7 +74,7 @@ monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
 
 -- monad-law-2 : join . fmap return = join . return = id
 -- monad-law-2-1 join . fmap return = join . return
-monad-law-2-1 : {l : Level} {A : Set l} -> (s : Similar  A) ->
+monad-law-2-1 : {l : Level} {A : Set l} -> (s : Delta  A) ->
   (mu ∙ fmap eta) s ≡ (mu ∙ eta) s
 monad-law-2-1 (similar lx x ly y) = begin
     similar (lx ++ []) x (ly ++ []) y
@@ -85,7 +85,7 @@ monad-law-2-1 (similar lx x ly y) = begin
   ∎
 
 -- monad-law-2-2 :  join . return = id
-monad-law-2-2 : {l : Level} {A : Set l } -> (s : Similar A) -> (mu ∙ eta) s ≡ id s
+monad-law-2-2 : {l : Level} {A : Set l } -> (s : Delta A) -> (mu ∙ eta) s ≡ id s
 monad-law-2-2 (similar lx x ly y) = refl
 
 -- monad-law-3 : return . f = fmap f . return
@@ -93,7 +93,7 @@ monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (eta ∙ f) x �
 monad-law-3 f x = refl
 
 -- monad-law-4 : join . fmap (fmap f) = fmap f . join
-monad-law-4 : {l ll : Level} {A : Set l} {B : Set ll} (f : A -> B) (s : Similar (Similar A)) ->
+monad-law-4 : {l ll : Level} {A : Set l} {B : Set ll} (f : A -> B) (s : Delta (Delta A)) ->
               (mu ∙ fmap (fmap f)) s ≡ (fmap f ∙ mu) s
 monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
 
@@ -101,7 +101,7 @@ monad-law-4 f (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = refl
 -- Monad-laws (Haskell)
 -- monad-law-h-1 : return a >>= k  =  k a
 monad-law-h-1 : {l ll : Level} {A : Set l} {B : Set ll} ->
-                (a : A) -> (k : A -> (Similar B)) ->
+                (a : A) -> (k : A -> (Delta B)) ->
                 (return a >>= k)  ≡ (k a)
 monad-law-h-1 a k = begin
     return a >>= k
@@ -120,12 +120,12 @@ monad-law-h-1 a k = begin
   ∎
 
 -- monad-law-h-2 : m >>= return  =  m
-monad-law-h-2 : {l : Level}{A : Set l} -> (m : Similar A) -> (m >>= return)  ≡ m
+monad-law-h-2 : {l : Level}{A : Set l} -> (m : Delta A) -> (m >>= return)  ≡ m
 monad-law-h-2 (similar lx x ly y) = monad-law-2-1 (similar lx x ly y)
 
 -- monad-law-h-3 : m >>= (\x -> k x >>= h)  =  (m >>= k) >>= h
 monad-law-h-3 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
-                (m : Similar A)  -> (k : A -> (Similar B)) -> (h : B -> (Similar C)) ->
+                (m : Delta A)  -> (k : A -> (Delta B)) -> (h : B -> (Delta C)) ->
                 (m >>= (\x -> k x >>= h)) ≡ ((m >>= k) >>= h)
 monad-law-h-3 (similar lx x ly y) k h = begin
     ((similar lx x ly y) >>= (\x -> (k x) >>= h))
@@ -142,7 +142,7 @@ monad-law-h-3 (similar lx x ly y) k h = begin
   ≡⟨ refl ⟩
     (mu ∙ (fmap mu)) ((fmap (\x -> fmap h (k x))) (similar lx x ly y))
   ≡⟨ monad-law-1 (((fmap (\x -> fmap h (k x))) (similar lx x ly y))) ⟩
-    (mu ∙ mu) ((fmap (\x -> fmap h (k x))) (similar lx x ly y)) 
+    (mu ∙ mu) ((fmap (\x -> fmap h (k x))) (similar lx x ly y))
   ≡⟨ refl ⟩
     (mu ∙ (mu ∙ (fmap (\x -> fmap h (k x))))) (similar lx x ly y)
   ≡⟨ refl ⟩
