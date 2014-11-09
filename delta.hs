@@ -7,8 +7,8 @@ instance (Show a) => Show (Delta a) where
     show (Delta lx x ly y) = values ++ logs
         where
             values        = "Delta {" ++ (show x) ++ "|" ++ (show y) ++ "}\n"
-            logs          = concat . reverse $ zipWith (formatter x y) lx ly
-            formatter x y = (\x y -> "      {" ++ x ++ (separator x y) ++ y ++ "}\n")
+            logs          = concat . reverse $ zipWith formatter lx ly
+            formatter x y = "      {" ++ x ++ (separator x y) ++ y ++ "}\n"
             separator x y = if (max (length x) (length y)) > 50 then "|\n       " else "|"
 
 value :: (Delta a) -> a
