@@ -1,7 +1,15 @@
 import Control.Applicative
 import Data.Numbers.Primes -- $ cabal install primes
 
-data Delta a = Delta [String] a [String] a deriving (Show)
+data Delta a = Delta [String] a [String] a
+
+instance (Show a) => Show (Delta a) where
+    show (Delta lx x ly y) = values ++ logs
+        where
+            values        = "Delta {" ++ (show x) ++ "|" ++ (show y) ++ "}\n"
+            logs          = concat . reverse $ zipWith (formatter x y) lx ly
+            formatter x y = (\x y -> "      {" ++ x ++ (separator x y) ++ y ++ "}\n")
+            separator x y = if (max (length x) (length y)) > 50 then "|\n       " else "|"
 
 value :: (Delta a) -> a
 value (Delta _ x _ _) = x
