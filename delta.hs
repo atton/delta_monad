@@ -14,8 +14,11 @@ instance (Show a) => Show (Delta a) where
 value :: (Delta a) -> a
 value (Delta _ x _ _) = x
 
-similar :: (Delta a) -> a
-similar (Delta _ _ _ y) = y
+deltaLeft :: (Delta a) -> a
+deltaLeft (Delta _ x _ _) = x
+
+deltaRight :: (Delta a) -> a
+deltaRight (Delta _ _ _ y) = y
 
 instance (Eq a) => Eq (Delta a) where
     s == ss = (value s) == (value ss)
@@ -26,6 +29,10 @@ instance Functor Delta where
 -- not proof
 fmapS :: (Show a) => (a -> b) -> Delta a -> Delta b
 fmapS f (Delta lx x ly y) = Delta (lx ++ [(show x)]) (f x) (ly ++ [(show y)]) (f y)
+
+-- not proof
+fmapSS :: (Show a) => (a -> b) -> (a -> b) -> Delta a -> Delta b
+fmapSS f g (Delta lx x ly y) = Delta (lx ++ [(show x)]) (f x) (ly ++ [(show y)]) (g y)
 
 instance Applicative Delta where
     pure f                                      = Delta [] f [] f
@@ -64,10 +71,23 @@ primeCount :: Int -> Delta Int
 primeCount x = generator x >>= primeFilter >>= count
 
 bubbleSort :: [Int] -> Delta [Int]
-bubbleSort [] = returnS []
-bubbleSort xs = fmapS (\x -> (replicate maxNumCount maxNum) ++ x) (bubbleSort remainList)
-    where
-        maxNum      = maximum xs
-        remainList  = filter (/= maxNum) xs
-        maxNumCount = (length xs) - (length remainList)
+bubbleSort = rightReverse . bubbleSortDelta . returnS
 
+bubbleSortDelta :: Delta [Int] -> Delta [Int]
+bubbleSortDelta (Delta lx [] ly []) = (Delta lx [] ly [])
+bubbleSortDelta xs = fmapSS (\x -> (replicate maxNumCount maxNum) ++ x)
+                            (\y -> (replicate minNumCount minNum) ++ y)
+                            (bubbleSortDelta $ fmapSS remainListMax remainListMin xs)
+    where
+        leftValue      = deltaLeft xs
+        rightValue     = deltaRight xs
+        maxNum         = maximum leftValue
+        minNum         = minimum rightValue
+        remainListMax  = filter (/= maxNum)
+        remainListMin  = filter (/= minNum)
+        maxNumCount    = (length leftValue)  - (length $ remainListMax leftValue)
+        minNumCount    = (length rightValue) - (length $ remainListMin rightValue)
+
+
+rightReverse :: Delta [Int] -> Delta [Int]
+rightReverse d = fmapSS id reverse d
