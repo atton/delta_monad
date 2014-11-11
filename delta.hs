@@ -23,6 +23,10 @@ instance (Eq a) => Eq (Delta a) where
 instance Functor Delta where
     fmap f (Delta xs x ys y) = Delta xs (f x) ys (f y)
 
+-- not proof
+fmapS :: (Show a) => (a -> b) -> Delta a -> Delta b
+fmapS f (Delta lx x ly y) = Delta (lx ++ [(show x)]) (f x) (ly ++ [(show y)]) (f y)
+
 instance Applicative Delta where
     pure f                                      = Delta [] f [] f
     (Delta lf f lg g) <*> (Delta lx x ly y) = Delta (lf ++ lx) (f x) (lg ++ ly) (g y)
@@ -58,3 +62,12 @@ count xs = let primeCount = length xs in
 
 primeCount :: Int -> Delta Int
 primeCount x = generator x >>= primeFilter >>= count
+
+bubbleSort :: [Int] -> Delta [Int]
+bubbleSort [] = returnS []
+bubbleSort xs = fmapS (\x -> (replicate maxNumCount maxNum) ++ x) (bubbleSort remainList)
+    where
+        maxNum      = maximum xs
+        remainList  = filter (/= maxNum) xs
+        maxNumCount = (length xs) - (length remainList)
+
