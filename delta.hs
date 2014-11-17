@@ -71,23 +71,8 @@ primeCount :: Int -> Delta Int
 primeCount x = generator x >>= primeFilter >>= count
 
 bubbleSort :: [Int] -> Delta [Int]
-bubbleSort = rightReverse . bubbleSortDelta . returnS
-
-bubbleSortDelta :: Delta [Int] -> Delta [Int]
-bubbleSortDelta (Delta lx [] ly []) = (Delta lx [] ly [])
-bubbleSortDelta xs = fmapSS (\x -> (replicate maxNumCount maxNum) ++ x)
-                            (\y -> (replicate minNumCount minNum) ++ y)
-                            (bubbleSortDelta $ fmapSS remainListMax remainListMin xs)
+bubbleSort [] = returnS []
+bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnS $ sortedValue : xs)
     where
-        leftValue      = deltaLeft xs
-        rightValue     = deltaRight xs
-        maxNum         = maximum leftValue
-        minNum         = minimum rightValue
-        remainListMax  = filter (/= maxNum)
-        remainListMin  = filter (/= minNum)
-        maxNumCount    = (length leftValue)  - (length $ remainListMax leftValue)
-        minNumCount    = (length rightValue) - (length $ remainListMin rightValue)
-
-
-rightReverse :: Delta [Int] -> Delta [Int]
-rightReverse d = fmapSS id reverse d
+        sortedValue = maximum xs
+        remainValue = filter (/= sortedValue) xs
