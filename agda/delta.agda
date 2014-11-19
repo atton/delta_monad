@@ -7,19 +7,42 @@ open ≡-Reasoning
 
 module delta where
 
+DeltaLog : Set
+DeltaLog = List String
+
 data Delta {l : Level} (A : Set l) : (Set (suc l)) where
-  similar : List String -> A -> List String -> A -> Delta A
+  mono    : DeltaLog -> A -> Delta A
+  delta   : DeltaLog -> A -> Delta A -> Delta A
+
+logAppend : {l : Level} {A : Set l} -> DeltaLog -> Delta A -> Delta A
+logAppend l (mono lx x)    = mono  (l ++ lx) x
+logAppend l (delta lx x d) = delta (l ++ lx) x (logAppend l d)
+
+deltaAppend : {l : Level} {A : Set l} -> Delta A -> Delta A -> Delta A
+deltaAppend (mono lx x) d     = delta lx x d
+deltaAppend (delta lx x d) ds = delta lx x (deltaAppend d ds)
+
+headDelta : {l : Level} {A : Set l} -> Delta A -> Delta A
+headDelta (mono lx x)    = mono lx x
+headDelta (delta lx x _) = mono lx x
+
+tailDelta : {l : Level} {A : Set l} -> Delta A -> Delta A
+tailDelta (mono lx x)   = mono lx x
+tailDelta (delta _ _ d) = d
 
 
 -- Functor
 fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
-fmap f (similar xs x ys y) = similar xs (f x) ys (f y)
+fmap f (mono lx x)    = mono lx (f x)
+fmap f (delta lx x d) = delta lx (f x) (fmap f d)
 
 
 -- Monad (Category)
 mu : {l : Level} {A : Set l} -> Delta (Delta A) -> Delta A
-mu (similar lx (similar llx x _ _) ly (similar _ _ lly y)) = similar (lx ++ llx) x (ly ++ lly) y
+mu (mono ld d)     = logAppend ld d
+mu (delta ld d ds) = deltaAppend (logAppend ld (headDelta d)) (mu (fmap tailDelta ds))
 
+{-
 eta : {l : Level} {A : Set l} -> A -> Delta A
 eta x = similar [] x [] x
 
@@ -164,3 +187,4 @@ monad-law-h-3 (similar lx x ly y) k h = begin
   ≡⟨ refl ⟩
     ((similar lx x ly y) >>= k) >>= h
   ∎
+-}
