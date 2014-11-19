@@ -37,26 +37,25 @@ fmap f (mono lx x)    = mono lx (f x)
 fmap f (delta lx x d) = delta lx (f x) (fmap f d)
 
 
+{-# NO_TERMINATION_CHECK #-}
 -- Monad (Category)
 mu : {l : Level} {A : Set l} -> Delta (Delta A) -> Delta A
 mu (mono ld d)     = logAppend ld d
 mu (delta ld d ds) = deltaAppend (logAppend ld (headDelta d)) (mu (fmap tailDelta ds))
 
-{-
 eta : {l : Level} {A : Set l} -> A -> Delta A
-eta x = similar [] x [] x
+eta x = mono [] x
 
 returnS : {l : Level} {A : Set l} -> A -> Delta A
-returnS x = similar [[ (show x) ]] x [[ (show x) ]] x
+returnS x = mono [[ (show x) ]] x
 
 returnSS : {l : Level} {A : Set l} -> A -> A -> Delta A
-returnSS x y = similar [[ (show x) ]] x [[ (show y) ]] y
+returnSS x y = delta [[ (show x) ]] x (mono [[ (show y) ]] y)
 
 
 -- Monad (Haskell)
 return : {l : Level} {A : Set l} -> A -> Delta A
 return = eta
-
 
 _>>=_ : {l ll : Level} {A : Set l} {B : Set ll} ->
         (x : Delta A) -> (f : A -> (Delta B)) -> (Delta B)
@@ -70,17 +69,19 @@ x >>= f = mu (fmap f x)
 -- Functor-laws
 
 -- Functor-law-1 : T(id) = id'
-functor-law-1 :  {l : Level} {A : Set l} ->  (s : Delta A) -> (fmap id) s ≡ id s
-functor-law-1 (similar lx x ly y) = refl
+functor-law-1 :  {l : Level} {A : Set l} ->  (d : Delta A) -> (fmap id) d ≡ id d
+functor-law-1 (mono lx x)    = refl
+functor-law-1 (delta lx x d) = cong (delta lx x) (functor-law-1 d)
 
 -- Functor-law-2 : T(f . g) = T(f) . T(g)
 functor-law-2 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
-                (f : B -> C) -> (g : A -> B) -> (s : Delta A) ->
-                (fmap (f ∙ g)) s ≡ ((fmap f) ∙ (fmap g)) s
-functor-law-2 f g (similar lx x ly y) = refl
+                (f : B -> C) -> (g : A -> B) -> (d : Delta A) ->
+                (fmap (f ∙ g)) d ≡ ((fmap f) ∙ (fmap g)) d
+functor-law-2 f g (mono lx x)    = refl
+functor-law-2 f g (delta lx x d) = cong (delta lx (f (g x))) (functor-law-2 f g d)
 
 
-
+{-
 -- Monad-laws (Category)
 
 -- monad-law-1 : join . fmap join = join . join
