@@ -65,6 +65,22 @@ x >>= f = mu (fmap f x)
 
 -- proofs
 
+-- sub proofs
+twice-log-append : {l : Level} {A : Set l} -> (l : List String) -> (ll : List String) -> (d : Delta A) ->
+                   logAppend l (logAppend ll d) ≡ logAppend (l ++ ll) d
+twice-log-append l ll (mono lx x) = begin
+  mono (l ++ (ll ++ lx)) x
+  ≡⟨ cong (\l -> mono l x) (list-associative l ll lx) ⟩
+  mono (l ++ ll ++ lx) x
+  ∎
+twice-log-append l ll (delta lx x d) = begin
+  delta (l ++ (ll ++ lx)) x (logAppend l (logAppend ll d))
+  ≡⟨ cong (\lx -> delta lx x (logAppend l (logAppend ll d))) (list-associative l ll lx) ⟩
+  delta (l ++ ll ++ lx) x (logAppend l (logAppend ll d))
+  ≡⟨ cong (delta (l ++ ll ++ lx) x) (twice-log-append l ll d) ⟩
+  delta (l ++ ll ++ lx) x (logAppend (l ++ ll) d)
+  ∎
+
 
 -- Functor-laws
 
@@ -81,21 +97,83 @@ functor-law-2 f g (mono lx x)    = refl
 functor-law-2 f g (delta lx x d) = cong (delta lx (f (g x))) (functor-law-2 f g d)
 
 
-{-
+
 -- Monad-laws (Category)
 
 -- monad-law-1 : join . fmap join = join . join
-monad-law-1 : {l : Level} {A : Set l} -> (s : Delta (Delta (Delta A))) -> ((mu ∙ (fmap mu)) s) ≡ ((mu ∙ mu) s)
-monad-law-1 (similar lx (similar llx (similar lllx x _ _) _ (similar _ _ _ _))
-                     ly (similar   _ (similar _ _ _ _)  lly (similar _ _  llly y))) = begin
-    similar (lx ++ (llx ++ lllx)) x (ly ++ (lly ++ llly)) y
-  ≡⟨ cong (\left-list -> similar left-list x (ly ++ (lly ++ llly)) y) (list-associative lx llx lllx) ⟩
-    similar (lx ++ llx ++ lllx) x (ly ++ (lly ++ llly)) y
-  ≡⟨ cong (\right-list -> similar (lx ++ llx ++ lllx) x right-list y ) (list-associative ly lly llly) ⟩
-    similar (lx ++ llx ++ lllx) x (ly ++ lly ++ llly) y
+monad-law-1 : {l : Level} {A : Set l} -> (d : Delta (Delta (Delta A))) -> ((mu ∙ (fmap mu)) d) ≡ ((mu ∙ mu) d)
+monad-law-1 (mono lx (mono llx (mono lllx x))) = begin
+    mono (lx ++ (llx ++ lllx)) x
+  ≡⟨ cong (\l -> mono l x) (list-associative lx llx lllx) ⟩
+    mono (lx ++ llx ++ lllx) x
   ∎
+monad-law-1 (mono lx (mono llx (delta lllx x d))) = begin
+    delta (lx ++ (llx ++ lllx)) x (logAppend lx (logAppend llx d))
+  ≡⟨ cong (\l -> delta l x (logAppend lx (logAppend llx d))) (list-associative lx llx lllx) ⟩
+    delta (lx ++ llx ++ lllx) x (logAppend lx (logAppend llx d))
+  ≡⟨ cong (\d -> delta (lx ++ llx ++ lllx) x d) (twice-log-append lx llx d) ⟩
+    delta (lx ++ llx ++ lllx) x (logAppend (lx ++ llx) d)
+  ∎
+monad-law-1 (mono lx (delta ld (mono x x₁) (mono x₂ (mono x₃ x₄)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (mono (lx ++ (x₂ ++ x₃)) x₄)
+  ≡⟨ cong (\l -> delta l x₁(mono (lx ++ (x₂ ++ x₃)) x₄)) (list-associative lx ld x) ⟩
+  delta (lx ++ ld ++ x) x₁ (mono (lx ++ (x₂ ++ x₃)) x₄)
+  ≡⟨ cong (\l -> delta (lx ++ ld ++ x) x₁ (mono l x₄)) (list-associative lx x₂ x₃) ⟩
+  delta (lx ++ ld ++ x) x₁ (mono (lx ++ x₂ ++ x₃) x₄)
+  ∎
+monad-law-1 (mono lx (delta ld (mono x x₁) (mono x₂ (delta x₃ x₄ ds)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (logAppend lx (logAppend x₂ ds))
+  ≡⟨ cong (\l -> delta l x₁ (logAppend lx (logAppend x₂ ds))) (list-associative lx ld x) ⟩
+  delta (lx ++ ld ++ x) x₁ (logAppend lx (logAppend x₂ ds))
+  ≡⟨ cong (\d -> delta (lx ++ ld ++ x) x₁ d)  (twice-log-append lx x₂ ds) ⟩
+  delta (lx ++ ld ++ x) x₁ (logAppend (lx ++ x₂) ds)
+  ∎
+monad-law-1 (mono lx (delta ld (delta x x₁ (mono x₂ x₃)) (mono x₄ (mono x₅ x₆)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (mono (lx ++ (x₄ ++ x₅)) x₆)
+  ≡⟨ cong (\l -> delta l x₁ (mono (lx ++ (x₄ ++ x₅)) x₆)) (list-associative lx ld x ) ⟩
+  delta (lx ++ ld ++ x) x₁  (mono (lx ++ (x₄ ++ x₅)) x₆)
+  ≡⟨ cong (\l -> delta (lx ++ ld ++ x) x₁ (mono l x₆))  (list-associative lx x₄ x₅)⟩
+  delta (lx ++ ld ++ x) x₁ (mono (lx ++ x₄ ++ x₅) x₆)
+  ∎
+monad-law-1 (mono lx (delta ld (delta x x₁ (mono x₂ x₃)) (mono x₄ (delta x₅ x₆ ds)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (logAppend lx (logAppend x₄ ds))
+  ≡⟨ cong (\l -> delta l x₁(logAppend lx (logAppend x₄ ds))) (list-associative lx ld x ) ⟩  
+  delta (lx ++ ld ++ x) x₁ (logAppend lx (logAppend x₄ ds))
+  ≡⟨ cong (\d -> delta (lx ++ ld ++ x) x₁ d) (twice-log-append lx x₄ ds ) ⟩
+  delta (lx ++ ld ++ x) x₁ (logAppend (lx ++ x₄) ds)
+  ∎
+  
+monad-law-1 (mono lx (delta ld (delta x x₁ (delta ly y (mono x₂ x₃))) (mono x₄ (mono x₅ x₆)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (mono (lx ++ (x₄ ++ x₅)) x₆)
+  ≡⟨ {!!} ⟩
+  delta (lx ++ ld ++ x) x₁ (mono (lx ++ x₄ ++ x₅) x₆)
+  ∎
+monad-law-1 (mono lx (delta ld (delta x x₁ (delta ly y (mono x₂ x₃))) (mono x₄ (delta x₅ x₆ ds)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (logAppend lx (logAppend x₄ ds))
+  ≡⟨ {!!} ⟩
+  delta (lx ++ ld ++ x) x₁ (logAppend (lx ++ x₄) ds)
+  ∎
+monad-law-1 (mono lx (delta ld (delta x x₁ (delta ly y (delta x₂ x₃ d))) (mono x₄ (mono x₅ x₆)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (mono (lx ++ (x₄ ++ x₅)) x₆)
+  ≡⟨ {!!} ⟩
+  delta (lx ++ ld ++ x) x₁ (mono (lx ++ x₄ ++ x₅) x₆)
+  ∎
+monad-law-1 (mono lx (delta ld (delta x x₁ (delta ly y (delta x₂ x₃ d))) (mono x₄ (delta x₅ x₆ ds)))) = begin
+  delta (lx ++ (ld ++ x)) x₁ (logAppend lx (logAppend x₄ ds))
+  ≡⟨ {!!} ⟩
+  delta (lx ++ ld ++ x) x₁ (logAppend (lx ++ x₄) ds)
+  ∎
+  
 
 
+
+monad-law-1 (mono lx (delta ld d (delta x ds ds₁))) = {!!}
+  
+
+
+monad-law-1 (delta lx x d) = {!!}
+
+{-
 -- monad-law-2 : join . fmap return = join . return = id
 -- monad-law-2-1 join . fmap return = join . return
 monad-law-2-1 : {l : Level} {A : Set l} -> (s : Delta  A) ->
