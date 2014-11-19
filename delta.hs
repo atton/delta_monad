@@ -67,7 +67,7 @@ bubbleSort [] = returnS []
 bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnSS (sortedValueL : xs)
                                                             (sortedValueR ++ xs))
     where
-        maxmumValue  = maximum xs
-        sortedValueL = maxmumValue
-        sortedValueR = replicate (length $ filter (== maxmumValue) xs) maxmumValue
-        remainValue  = filter (/= maxmumValue) xs
+        maximumValue = maximum xs
+        sortedValueL = maximumValue
+        sortedValueR = replicate (length $ filter (== maximumValue) xs) maximumValue
+        remainValue  = filter (/= maximumValue) xs
