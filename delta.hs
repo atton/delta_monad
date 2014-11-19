@@ -1,48 +1,52 @@
 import Control.Applicative
 import Data.Numbers.Primes -- $ cabal install primes
 
-data Delta a = Delta [String] a [String] a
+type DeltaLog = [String]
 
-instance (Show a) => Show (Delta a) where
-    show (Delta lx x ly y) = values ++ logs
-        where
-            values        = "Delta {" ++ (show x) ++ "|" ++ (show y) ++ "}\n"
-            logs          = concat . reverse $ zipWith formatter lx ly
-            formatter x y = "      {" ++ x ++ (separator x y) ++ y ++ "}\n"
-            separator x y = if (max (length x) (length y)) > 50 then "|\n       " else "|"
+data Delta a = Mono DeltaLog a | Delta DeltaLog a (Delta a) deriving Show
 
-value :: (Delta a) -> a
-value (Delta _ x _ _) = x
+logAppend :: DeltaLog -> Delta a -> Delta a
+logAppend l (Mono lx x)    = Mono (l ++ lx) x
+logAppend l (Delta lx x d) = Delta (l ++ lx) x (logAppend l d)
 
-deltaLeft :: (Delta a) -> a
-deltaLeft (Delta _ x _ _) = x
+deltaAppend :: Delta a -> Delta a -> Delta a
+deltaAppend (Mono lx x) d = Delta lx x d
+deltaAppend (Delta lx x d) ds = Delta lx x (deltaAppend d ds)
 
-deltaRight :: (Delta a) -> a
-deltaRight (Delta _ _ _ y) = y
+firstDelta :: Delta a -> Delta a
+firstDelta d@(Mono _ _)   = d
+firstDelta (Delta lx x _) = Mono lx x
 
-instance (Eq a) => Eq (Delta a) where
-    s == ss = (value s) == (value ss)
+tailDelta :: Delta a -> Delta a
+tailDelta d@(Mono _ _)   = d
+tailDelta (Delta _ _ ds) = ds
 
 instance Functor Delta where
-    fmap f (Delta xs x ys y) = Delta xs (f x) ys (f y)
+    fmap f (Mono lx x)    = Mono  lx (f x)
+    fmap f (Delta lx x d) = Delta lx (f x) (fmap f d)
 
 instance Applicative Delta where
-    pure f                                  = Delta [] f [] f
-    (Delta lf f lg g) <*> (Delta lx x ly y) = Delta (lf ++ lx) (f x) (lg ++ ly) (g y)
+    pure f                             = Mono [] f
+    (Mono lf f)     <*> (Mono lx x)    = Mono  (lf ++ lx) (f x)
+    df@(Mono lf f)  <*> (Delta lx x d) = Delta (lf ++ lx) (f x) (df <*> d)
+    (Delta lf f df) <*> d@(Mono lx x)  = Delta (lf ++ lx) (f x) (df <*> d)
+    (Delta lf f df) <*> (Delta lx x d) = Delta (lf ++ lx) (f x) (df <*> d)
+
 
 mu :: Delta (Delta a) -> Delta a
-mu (Delta lx (Delta llx x _ _) ly (Delta _ _ lly y)) = Delta (lx ++ llx) x (ly ++ lly) y
+mu (Mono ld d)     = logAppend ld d
+mu (Delta ld d ds) = (logAppend ld $ firstDelta d) `deltaAppend` (mu $ fmap tailDelta ds)
 
 instance Monad Delta where
-    return x = Delta [] x [] x
-    s >>= f  = mu $ fmap f s
-
+    return x = Mono [] x
+    d >>= f  = mu $ fmap f d
 
 returnS :: (Show s) => s -> Delta s
-returnS x = Delta [(show x)] x [(show x)] x
+returnS x = Mono [(show x)] x
 
 returnSS :: (Show s) => s -> s -> Delta s
-returnSS x y = Delta [(show x)] x [(show y)] y
+returnSS x y = (returnS x) `deltaAppend` (returnS y)
+
 
 -- samples
 
