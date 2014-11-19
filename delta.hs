@@ -13,9 +13,9 @@ deltaAppend :: Delta a -> Delta a -> Delta a
 deltaAppend (Mono lx x) d = Delta lx x d
 deltaAppend (Delta lx x d) ds = Delta lx x (deltaAppend d ds)
 
-firstDelta :: Delta a -> Delta a
-firstDelta d@(Mono _ _)   = d
-firstDelta (Delta lx x _) = Mono lx x
+headDelta :: Delta a -> Delta a
+headDelta d@(Mono _ _)   = d
+headDelta (Delta lx x _) = Mono lx x
 
 tailDelta :: Delta a -> Delta a
 tailDelta d@(Mono _ _)   = d
@@ -35,7 +35,7 @@ instance Applicative Delta where
 
 mu :: Delta (Delta a) -> Delta a
 mu (Mono ld d)     = logAppend ld d
-mu (Delta ld d ds) = (logAppend ld $ firstDelta d) `deltaAppend` (mu $ fmap tailDelta ds)
+mu (Delta ld d ds) = (logAppend ld $ headDelta d) `deltaAppend` (mu $ fmap tailDelta ds)
 
 instance Monad Delta where
     return x = Mono [] x
