@@ -1,48 +1,39 @@
 import Control.Applicative
 import Data.Numbers.Primes -- $ cabal install primes
 
-type DeltaLog = [String]
-
-data Delta a = Mono DeltaLog a | Delta DeltaLog a (Delta a) deriving Show
-
-logAppend :: DeltaLog -> Delta a -> Delta a
-logAppend l (Mono lx x)    = Mono (l ++ lx) x
-logAppend l (Delta lx x d) = Delta (l ++ lx) x (logAppend l d)
+data Delta a = Mono a | Delta a (Delta a) deriving Show
 
 deltaAppend :: Delta a -> Delta a -> Delta a
-deltaAppend (Mono lx x) d = Delta lx x d
-deltaAppend (Delta lx x d) ds = Delta lx x (deltaAppend d ds)
+deltaAppend (Mono x) d     = Delta x d
+deltaAppend (Delta x d) ds = Delta x (deltaAppend d ds)
 
 headDelta :: Delta a -> Delta a
-headDelta d@(Mono _ _)   = d
-headDelta (Delta lx x _) = Mono lx x
+headDelta d@(Mono  _)   = d
+headDelta (Delta x _) = Mono x
 
 tailDelta :: Delta a -> Delta a
-tailDelta d@(Mono _ _)   = d
-tailDelta (Delta _ _ ds) = ds
+tailDelta d@(Mono _)   = d
+tailDelta (Delta _ ds) = ds
 
 instance Functor Delta where
-    fmap f (Mono lx x)    = Mono  lx (f x)
-    fmap f (Delta lx x d) = Delta lx (f x) (fmap f d)
+    fmap f (Mono x)    = Mono  (f x)
+    fmap f (Delta x d) = Delta (f x) (fmap f d)
 
 instance Applicative Delta where
-    pure f                             = Mono [] f
-    (Mono lf f)     <*> (Mono lx x)    = Mono  (lf ++ lx) (f x)
-    df@(Mono lf f)  <*> (Delta lx x d) = Delta (lf ++ lx) (f x) (df <*> d)
-    (Delta lf f df) <*> d@(Mono lx x)  = Delta (lf ++ lx) (f x) (df <*> d)
-    (Delta lf f df) <*> (Delta lx x d) = Delta (lf ++ lx) (f x) (df <*> d)
+    pure f                       = Mono  f
+    (Mono f)     <*> (Mono x)    = Mono  (f x)
+    df@(Mono f)  <*> (Delta x d) = Delta (f x) (df <*> d)
+    (Delta f df) <*> d@(Mono x)  = Delta (f x) (df <*> d)
+    (Delta f df) <*> (Delta x d) = Delta (f x) (df <*> d)
 
-
-mu :: Delta (Delta a) -> Delta a
-mu (Mono ld d)     = logAppend ld d
-mu (Delta ld d ds) = (logAppend ld $ headDelta d) `deltaAppend` (mu $ fmap tailDelta ds)
 
 instance Monad Delta where
-    return x = Mono [] x
-    d >>= f  = mu $ fmap f d
+    return x = Mono x
+    (Mono x)    >>= f  = f x
+    (Delta x d) >>= f  = (headDelta (f x)) `deltaAppend` (d >>= (tailDelta . f))
 
 returnS :: (Show s) => s -> Delta s
-returnS x = Mono [(show x)] x
+returnS x = Mono x
 
 returnSS :: (Show s) => s -> s -> Delta s
 returnSS x y = (returnS x) `deltaAppend` (returnS y)
