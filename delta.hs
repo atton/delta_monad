@@ -32,10 +32,17 @@ instance Applicative Delta where
     (Delta f df) <*> d@(Mono x)  = Delta (f x) (df <*> d)
     (Delta f df) <*> (Delta x d) = Delta (f x) (df <*> d)
 
+bind :: (Delta a) -> (a -> Delta b) -> (Delta b)
+bind (Mono x)    f = f x
+bind (Delta x d) f = (headDelta (f x)) `deltaAppend` (bind d (tailDelta . f))
+
+mu :: (Delta (Delta a)) -> (Delta a)
+mu d = bind d id
+
 instance Monad Delta where
     return x = Mono x
-    (Mono x)    >>= f = f x
-    (Delta x d) >>= f = (headDelta (f x)) `deltaAppend` (d >>= (tailDelta . f))
+    d >>= f  = mu $ fmap f d
+
 
 
 -- utils
