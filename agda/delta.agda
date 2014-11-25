@@ -91,7 +91,7 @@ delta-append-natural-transfomation f (delta x d) dd = begin
   ≡⟨ refl ⟩
   fmap f (deltaAppend (delta x d) dd)
   ∎
-
+{-
 
 mu-head-delta : {l : Level} {A : Set l} -> (d : Delta (Delta A)) -> mu (headDelta d) ≡ headDelta (mu d)
 mu-head-delta (mono (mono x))    = refl
@@ -120,7 +120,7 @@ mu-head-delta (mono (delta x (mono xx))) = begin
   ∎
 mu-head-delta (mono (delta x (delta x₁ d))) = {!!}
 mu-head-delta (delta d dd) = {!!}
-
+-}
 -- Functor-laws
 
 -- Functor-law-1 : T(id) = id'
@@ -136,11 +136,174 @@ functor-law-2 f g (mono x)    = refl
 functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
 -- Monad-laws (Category)
-{-
+
+monad-law-1-4 : {l : Level} {A : Set l} -> (ds : Delta (Delta A)) ->
+  tailDelta (bind ds (tailDelta ∙ id)) ≡ bind (tailDelta ds) (tailDelta ∙ tailDelta) 
+monad-law-1-4 (mono ds) = refl
+monad-law-1-4 (delta (mono x) ds₁) = refl
+monad-law-1-4 (delta (delta x (mono x₁)) ds₁) = refl
+monad-law-1-4 (delta (delta x (delta x₁ ds)) ds₁) = refl
+
+monad-law-1-3 : {l : Level} {A : Set l} -> (ds : Delta (Delta A)) ->
+  tailDelta (bind ds tailDelta) ≡ bind (tailDelta ds) (tailDelta ∙ tailDelta)
+monad-law-1-3 (mono ds)              = refl
+monad-law-1-3 (delta (mono x) ds)    = refl
+monad-law-1-3 (delta (delta x (mono x₁)) ds) = refl
+monad-law-1-3 (delta (delta x (delta x₁ d)) ds) = refl
+
+monad-law-1-sub-sub : {l : Level} {A : Set l} -> (d : Delta (Delta (Delta A))) ->
+  bind (fmap mu d) (tailDelta ∙  tailDelta) ≡ bind (bind d (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+monad-law-1-sub-sub (mono (mono d))     = refl
+monad-law-1-sub-sub (mono (delta (mono x) ds)) = begin
+  bind (fmap mu (mono (delta (mono x) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (mu (delta (mono x) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (bind (delta (mono x) ds) id)) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (deltaAppend (headDelta (mono x)) (bind ds tailDelta))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (deltaAppend (mono x) (bind ds tailDelta))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (delta x (bind ds tailDelta))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (delta x (bind ds tailDelta))
+  ≡⟨ refl ⟩
+  tailDelta (bind ds tailDelta)
+  ≡⟨ monad-law-1-3 ds ⟩ -- ? 
+  bind (tailDelta ds) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind ((tailDelta ∙ tailDelta) (delta (mono x) ds)) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (bind (mono (delta (mono x) ds)) (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (bind (headDelta (tailDelta (mono (delta (mono x) ds)))) (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (bind (mono (delta (mono x) ds)) (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+  ∎
+monad-law-1-sub-sub (mono (delta (delta x (mono x₁)) ds)) = begin
+  bind (fmap mu (mono (delta (delta x (mono x₁)) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (mu (delta (delta x (mono x₁)) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (mu (delta (delta x (mono x₁)) ds))
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (bind (delta (delta x (mono x₁)) ds) id)
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (deltaAppend (headDelta (delta x (mono x₁))) (bind ds (tailDelta ∙ id)))
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (deltaAppend (mono x) (bind ds (tailDelta ∙ id)))
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (delta x (bind ds (tailDelta ∙ id)))
+  ≡⟨ refl ⟩
+  tailDelta (bind ds (tailDelta ∙ id))
+  ≡⟨ monad-law-1-4 ds ⟩
+  bind (tailDelta ds) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind ((tailDelta ∙ tailDelta) (delta (delta x (mono x₁)) ds)) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (bind (mono (delta (delta x (mono x₁)) ds))  (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+  ∎
+monad-law-1-sub-sub (mono (delta (delta x (delta xx d)) ds)) = begin
+  bind (fmap mu (mono (delta (delta x (delta xx d)) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  bind (mono (mu (delta (delta x (delta xx d)) ds))) (tailDelta ∙ tailDelta)
+  ≡⟨ refl ⟩
+  (tailDelta ∙ tailDelta) (mu (delta (delta x (delta xx d)) ds))
+  ≡⟨ {!!} ⟩ -- ? 
+  bind (bind (mono (delta (delta x (delta xx d)) ds)) (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)
+  ∎
+monad-law-1-sub-sub (delta d ds) = {!!}
+
+
+monad-law-1-sub : {l : Level } {A : Set l} -> (x : Delta (Delta A)) -> (d : Delta (Delta (Delta A))) ->
+  deltaAppend (headDelta (mu x)) (bind (fmap mu d) tailDelta) ≡ mu (deltaAppend (headDelta x) (bind d tailDelta))
+monad-law-1-sub (mono (mono _)) (mono (mono _)) = refl
+monad-law-1-sub (mono (mono _)) (mono (delta (mono _) _)) = refl
+monad-law-1-sub (mono (mono _)) (mono (delta (delta _ _) _)) = refl
+monad-law-1-sub (mono (mono x)) (delta (mono (mono xx)) d) = begin
+  deltaAppend (headDelta (mu (mono (mono x)))) (bind (fmap mu (delta (mono (mono xx)) d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mu (mono (mono x)))) (bind (delta (mu (mono (mono xx))) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (bind (mono (mono x)) id)) (bind (delta (mu (mono (mono xx))) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mono x)) (bind (delta (mu (mono (mono xx))) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mono x)) (bind (delta (mono xx) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (bind (delta (mono xx) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (bind (delta (mono xx) (fmap mu d)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (deltaAppend (tailDelta (mono xx)) (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (deltaAppend (mono xx) (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (deltaAppend (mu (mono (mono xx))) (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (deltaAppend (mono xx) (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ refl ⟩
+  delta x (deltaAppend (mono xx) (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ refl ⟩
+  delta x (delta xx (bind (fmap mu d) (tailDelta ∙  tailDelta)))
+  ≡⟨ cong (\d -> (delta x (delta xx d))) (monad-law-1-sub-sub d) ⟩ -- ???
+  delta x (delta xx (bind (bind d (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta)))
+  ≡⟨ refl ⟩
+  delta x ((deltaAppend (mono xx) (bind (bind d (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta))))
+  ≡⟨ refl ⟩
+  delta x ((deltaAppend (tailDelta (mono xx)) (bind (bind d (tailDelta ∙ tailDelta)) (tailDelta ∙ tailDelta))))
+  ≡⟨ refl ⟩
+  delta x (bind (delta (mono xx) (bind d (tailDelta ∙ tailDelta))) tailDelta)
+  ≡⟨ refl ⟩
+  delta x (bind (deltaAppend (mono (mono xx)) (bind d (tailDelta ∙ tailDelta))) tailDelta)
+  ≡⟨ refl ⟩
+  delta x (bind (deltaAppend (headDelta (tailDelta (mono (mono xx)))) (bind d (tailDelta ∙ tailDelta))) tailDelta)
+  ≡⟨ refl ⟩
+  delta x (bind (bind (delta (mono (mono xx)) d) tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (bind (bind (delta (mono (mono xx)) d) tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  bind (delta (mono x) (bind (delta (mono (mono xx)) d) tailDelta)) id
+  ≡⟨ refl ⟩
+  mu (delta (mono x) (bind (delta (mono (mono xx)) d) tailDelta))
+  ≡⟨ refl ⟩
+  mu (deltaAppend (mono (mono x)) (bind (delta (mono (mono xx)) d) tailDelta))
+  ≡⟨ refl ⟩
+  mu (deltaAppend (headDelta (mono (mono x))) (bind (delta (mono (mono xx)) d) tailDelta))
+ ∎
+monad-law-1-sub (mono (mono x)) (delta (mono (delta x₁ d)) d₁) = {!!}
+monad-law-1-sub (mono (mono x)) (delta (delta d d₁) d₂) = {!!}
+monad-law-1-sub (mono (delta x x₁)) d = {!!}
+monad-law-1-sub (delta x x₁) d = {!!}
+
 -- monad-law-1 : join . fmap join = join . join
 monad-law-1 : {l : Level} {A : Set l} -> (d : Delta (Delta (Delta A))) -> ((mu ∙ (fmap mu)) d) ≡ ((mu ∙ mu) d)
 monad-law-1 (mono d)    = refl
+monad-law-1 (delta x d) = begin
+  (mu ∙ (fmap mu)) (delta x d)
+  ≡⟨ refl ⟩
+  mu (fmap mu (delta x d))
+  ≡⟨ refl ⟩
+  mu (delta (mu x) (fmap mu d))
+  ≡⟨ refl ⟩
+  bind (delta (mu x) (fmap mu d)) id
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mu x)) (bind (fmap mu d) tailDelta)
+  ≡⟨ monad-law-1-sub x d ⟩
+  mu (deltaAppend (headDelta x) (bind d tailDelta))
+  ≡⟨ refl ⟩
+  mu (bind (delta x d) id)
+  ≡⟨ refl ⟩
+  mu (mu (delta x d))
+  ≡⟨ refl ⟩
+  (mu ∙ mu) (delta x d)
+  ∎
+
+-- split d
+{-
 monad-law-1 (delta x (mono d)) = begin
+
   (mu ∙ fmap mu) (delta x (mono d))
   ≡⟨ refl ⟩
   mu (fmap mu (delta x (mono d)))
@@ -152,12 +315,37 @@ monad-law-1 (delta x (mono d)) = begin
   deltaAppend (headDelta (mu x)) (bind (mono (mu d)) tailDelta)
   ≡⟨ refl ⟩
   deltaAppend (headDelta (mu x)) (tailDelta (mu d))
-  ≡⟨ cong (\de -> deltaAppend de (tailDelta (mu d))) (head-delta-natural-transformation {!!} {!!}) ⟩
-  deltaAppend (mu (headDelta x)) (tailDelta (mu d))
   ≡⟨ {!!} ⟩
+  mu (deltaAppend (headDelta x) (tailDelta d))
+  ≡⟨ refl ⟩
+  mu (deltaAppend (headDelta x) (tailDelta (id d)))
+  ≡⟨ refl ⟩
+  mu (deltaAppend (headDelta x) ((tailDelta ∙ id) d))
+  ≡⟨ refl ⟩
+  mu (deltaAppend (headDelta x) (bind  (mono d) (tailDelta ∙ id)))
+  ≡⟨  refl ⟩
+  mu (bind (delta x (mono d)) id)
+  ≡⟨ refl ⟩
+  mu (mu (delta x (mono d)))
+  ≡⟨ refl ⟩
   (mu ∙ mu) (delta x (mono d))
   ∎
-monad-law-1 (delta x (delta d d₁)) = {!!}
+monad-law-1 (delta x (delta d ds)) = begin
+  (mu ∙ fmap mu) (delta x (delta d ds))
+  ≡⟨ refl ⟩
+  mu (fmap mu (delta x (delta d ds)))
+  ≡⟨ refl ⟩
+  mu (delta (mu x) (delta (mu d) (fmap mu ds)))
+  ≡⟨ refl ⟩
+  bind (delta (mu x) (delta (mu d) (fmap mu ds))) id
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mu x)) (bind (delta (mu d) (fmap mu ds)) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mu x)) (deltaAppend (headDelta (tailDelta (mu d))) (bind (fmap mu ds) (tailDelta ∙ tailDelta)))
+
+  ≡⟨ {!!} ⟩
+  (mu ∙ mu) (delta x (delta d ds))
+  ∎
 -}
 
 
@@ -206,7 +394,7 @@ monad-law-1 (delta x (mono d))     = begin
   (mu ∙ mu) (delta x (mono d))
   ∎
 monad-law-1 (delta x (delta xx d)) = {!!}
-{-
+
 monad-law-1 (delta x d) = begin
    (mu ∙ fmap mu) (delta x d) 
    ≡⟨ refl ⟩
@@ -222,10 +410,10 @@ monad-law-1 (delta x d) = begin
    ≡⟨ {!!} ⟩
    (mu ∙ mu) (delta x d)
    ∎
--}
--}
 
-{-
+
+
+
 -- monad-law-2-2 :  join . return = id
 monad-law-2-2 : {l : Level} {A : Set l } -> (s : Delta A) -> (mu ∙ eta) s ≡ id s
 monad-law-2-2 (similar lx x ly y) = refl
