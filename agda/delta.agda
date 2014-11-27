@@ -100,6 +100,54 @@ tail-delta-to-mono (succ n) x = begin
   mono x
   ∎
 
+monad-law-1-6 : {l : Level} {A : Set l} -> (n : Int) -> (ds : Delta (Delta A)) ->
+  headDelta (n-times-tail-delta (succ (succ n)) (headDelta (n-times-tail-delta n ds)))
+  ≡
+  headDelta (n-times-tail-delta n (bind ds (tailDelta ∙ tailDelta)))
+monad-law-1-6 one (mono ds) = refl
+monad-law-1-6 one (delta ds (mono ds₁)) = refl
+monad-law-1-6 one (delta ds (delta ds₁ ds₂)) = refl
+monad-law-1-6 (succ n) (mono (mono x)) = begin
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (n-times-tail-delta (succ n) (mono (mono x)))))
+  ≡⟨ cong (\d -> headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta d))) (tail-delta-to-mono (succ n) (mono x)) ⟩
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (mono (mono x))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ n) (bind (mono (mono x)) (tailDelta ∙ tailDelta)))
+ ∎
+monad-law-1-6 (succ n) (mono (delta x ds)) = begin
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (n-times-tail-delta (succ n) (mono (delta x ds)))))
+  ≡⟨ cong (\d -> headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta d))) (tail-delta-to-mono (succ n) (delta x ds)) ⟩
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (mono (delta x ds))))
+  ≡⟨ refl ⟩
+  headDelta(n-times-tail-delta (succ n) (bind (mono (delta x ds)) (tailDelta ∙ tailDelta)))
+ ∎
+monad-law-1-6 (succ n) (delta d (mono ds)) = begin
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (n-times-tail-delta (succ n) (delta d (mono ds)))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (n-times-tail-delta n (mono ds))))
+  ≡⟨ cong (\d -> headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta d))) (tail-delta-to-mono n ds) ⟩
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (mono ds)))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ n) (bind (delta d (mono ds)) (tailDelta ∙ tailDelta)))
+ ∎
+monad-law-1-6 (succ n) (delta d (delta dd ds)) = begin
+  headDelta (n-times-tail-delta (succ (succ (succ n))) (headDelta (n-times-tail-delta (succ n) (delta d (delta dd ds)))))
+  ≡⟨ {!!} ⟩
+  headDelta (n-times-tail-delta (succ n) (bind (delta d (delta dd ds)) (tailDelta ∙ tailDelta)))
+ ∎
+{-
+  headDelta (n-times-tail-delta (succ (succ n)) (headDelta (n-times-tail-delta n ds)))
+  ≡
+  headDelta (n-times-tail-delta n (bind ds (tailDelta ∙ tailDelta)))
+-}
+
+monad-law-1-5 : {l : Level} {A : Set l} -> (ds : Delta (Delta A)) ->
+  headDelta (n-times-tail-delta (succ one) (headDelta ds))
+  ≡
+  headDelta (bind ds (tailDelta ∙ tailDelta))
+monad-law-1-5 (mono ds) = refl
+monad-law-1-5 (delta ds ds₁) = refl 
+
 monad-law-1-4 : {l : Level} {A : Set l} -> (n : Int) (d : Delta (Delta A)) -> 
   (headDelta ((n-times-tail-delta n) (headDelta ((n-times-tail-delta n) d)))) ≡ 
   (headDelta ((n-times-tail-delta n) (mu d)))
@@ -134,7 +182,40 @@ monad-law-1-4 (succ n) (delta d (mono ds)) = begin
   ≡⟨ refl ⟩
   headDelta (n-times-tail-delta (succ n) (mu (delta d (mono ds))))
  ∎
-monad-law-1-4 (succ n) (delta d (delta dd ds)) = begin
+monad-law-1-4 (succ one) (delta d (delta dd ds)) = begin
+  headDelta (n-times-tail-delta (succ one) (headDelta (n-times-tail-delta (succ one) (delta d (delta dd ds)))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ one) (headDelta (n-times-tail-delta one (delta dd ds))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ one) (headDelta ds))
+  ≡⟨ monad-law-1-5 ds ⟩
+  headDelta (bind ds (tailDelta ∙ tailDelta))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta one (delta (headDelta (tailDelta dd)) (bind ds (tailDelta ∙ tailDelta ))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta one (bind (delta dd ds) (tailDelta)))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ one) (delta (headDelta d) (bind (delta dd ds) (tailDelta))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ one) (mu (delta d (delta dd ds))))
+  ∎
+monad-law-1-4 (succ (succ n)) (delta d (delta dd ds)) = begin
+  headDelta (n-times-tail-delta (succ (succ n)) (headDelta (n-times-tail-delta (succ (succ n)) (delta d (delta dd ds)))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ (succ n)) (headDelta (n-times-tail-delta n ds)))
+  ≡⟨ monad-law-1-6 n ds ⟩
+  headDelta (n-times-tail-delta n (bind ds (tailDelta ∙ tailDelta)))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ n) (delta (headDelta dd) (bind ds (tailDelta ∙ tailDelta))))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ n) (bind (delta dd ds) tailDelta))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ (succ n)) (delta (headDelta d) (bind (delta dd ds) tailDelta)))
+  ≡⟨ refl ⟩
+  headDelta (n-times-tail-delta (succ (succ n)) (mu (delta d (delta dd ds))))
+  ∎
+
+{-begin
   headDelta (n-times-tail-delta (succ n) (headDelta (n-times-tail-delta (succ n) (delta d (delta dd ds)))))
   ≡⟨ refl ⟩
   headDelta (n-times-tail-delta (succ n) (headDelta (n-times-tail-delta n (delta dd ds))))
@@ -151,7 +232,7 @@ monad-law-1-4 (succ n) (delta d (delta dd ds)) = begin
   headDelta (n-times-tail-delta (succ n) (mu (delta d (delta dd ds))))
   ∎
 
-
+-}
 
 
 monad-law-1-3 : {l : Level} {A : Set l} -> (i : Int) -> (d : Delta (Delta (Delta A))) -> 
