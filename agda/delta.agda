@@ -107,78 +107,60 @@ functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
 -- Monad-laws (Category)
 
+monad-law-1-2 : {l : Level} {A : Set l} -> (ds : (Delta (Delta (Delta A)))) ->
+  bind (fmap mu ds) tailDelta ≡ bind (bind ds tailDelta) tailDelta
+monad-law-1-2 (mono (mono ds)) = refl
+monad-law-1-2 (mono (delta (mono x) ds₁)) = refl
+monad-law-1-2 (mono (delta (delta x ds) ds₁)) = refl
+monad-law-1-2 (delta (mono x) (mono d)) = begin
+  bind (fmap mu (delta (mono x) (mono d))) tailDelta
+  ≡⟨ refl ⟩
+  bind (delta (mu (mono x)) (fmap mu (mono d))) tailDelta
+  ≡⟨ {!!} ⟩
+  bind (delta x (bind (mono d) tailDelta)) tailDelta
+  ≡⟨ {!!} ⟩
+  bind (delta x (bind (mono d) (tailDelta ∙ tailDelta))) tailDelta
+  ≡⟨ refl ⟩
+  bind (deltaAppend (mono x) (bind (mono d) (tailDelta ∙ tailDelta))) tailDelta
+  ≡⟨ refl ⟩
+  bind (bind (delta (mono x) (mono d)) tailDelta) tailDelta
+  ∎
+monad-law-1-2 (delta (mono x) (delta d d₁)) = {!!}
+monad-law-1-2 (delta (delta x x₁) (mono d)) = {!!}
+monad-law-1-2 (delta (delta x x₁) (delta d d₁)) = {!!}
+
+
+
 monad-law-1-1 : {l : Level} {A : Set l} -> (x : Delta A) -> (d : Delta (Delta (Delta A))) ->
   mu (delta x (fmap mu d)) ≡ mu (delta x (bind d tailDelta))
-monad-law-1-1 x (mono (mono d)) = refl
-monad-law-1-1 x (mono (delta (mono _) ds)) = refl
-monad-law-1-1 x (mono (delta (delta _ _) ds)) = refl
-monad-law-1-1 x (delta (mono d) (mono (mono ds))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (mono _) (mono ds)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (mono _) (delta (mono _) ds)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (mono _) (delta (delta xxx (mono x₁)) ds)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (mono _) (delta (delta xxx (delta x₁ dd)) ds)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (delta x₁ dd) (mono (mono x₂))))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (delta x₁ dd) (mono (delta x₂ ds))))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (delta x₁ dd) (delta (mono x₂) ds₁)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (delta x₁ dd) (delta (delta x₂ (mono x₃)) ds₁)))) = refl
-monad-law-1-1 x (delta (mono d) (mono (delta (delta x₁ dd) (delta (delta x₂ (delta x₃ ds)) ds₁)))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (mono ds₁)))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (mono ds₂))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (mono ds₂))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (mono x₂) (mono ds₃)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (mono x₂) (delta (mono x₃) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (mono x₂) (delta (delta x₃ (mono x₄)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (mono x₂) (delta (delta x₃ (delta x₄ (mono x₅))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (mono x₂) (delta (delta x₃ (delta x₄ (delta x₅ ds₃))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (mono x₃)) (mono ds₃)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (mono x₃)) (delta (mono x₄) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (mono x₅)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (delta x₅ (mono x₆))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (delta x₅ (delta x₆ ds₃))) ds₄)))))) = refl
-
---
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (delta x₃ ds₂)) (mono ds₃)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (mono x₄) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (mono x₅)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (delta x₅ (mono x₆))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (mono x₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (delta x₅ (delta x₆ ds₃))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (mono (mono x₃))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (mono (mono x₄))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (mono (mono x₄))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (mono (delta x₃ ds₃))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (mono (delta x₄ ds₃))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (mono (delta x₄ ds₃))))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (delta (mono x₃) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (delta (delta x₃ (mono x₄)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (delta (delta x₃ (delta x₄ (mono x₅))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (mono x₂) (delta (delta x₃ (delta x₄ (delta x₅ ds₃))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (delta (mono x₄) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (mono x₅)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (delta x₅ (mono x₆))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (mono x₃)) (delta (delta x₄ (delta x₅ (delta x₆ ds₃))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (mono x₄) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (mono x₅)) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (delta x₅ (mono x₆))) ds₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (mono (delta (delta x₁ ds₁) (delta (delta x₂ (delta x₃ ds₂)) (delta (delta x₄ (delta x₅ (delta x₆ ds₃))) ds₄)))))) = refl
+monad-law-1-1 (mono x) ds = begin
+  mu (delta (mono x) (fmap mu ds))
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mono x)) (bind (fmap mu ds) tailDelta)
+  ≡⟨ refl ⟩
+  delta x (bind (fmap mu ds) tailDelta)
+  ≡⟨ cong (\d -> delta x d) (monad-law-1-2 ds) ⟩
+  delta x (bind (bind ds tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (headDelta (mono x)) (bind (bind ds tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  mu (delta (mono x) (bind ds tailDelta))
+  ∎
+monad-law-1-1 (delta x d) ds = begin
+  mu (delta (delta x d) (fmap mu ds))
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (bind (fmap mu ds) tailDelta)
+  ≡⟨ refl ⟩
+  delta x (bind (fmap mu ds) tailDelta)
+  ≡⟨ cong (\d -> delta x d) (monad-law-1-2 ds) ⟩
+  delta x (bind (bind ds tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  deltaAppend (mono x) (bind (bind ds tailDelta) tailDelta)
+  ≡⟨ refl ⟩
+  mu (delta (delta x d) (bind ds tailDelta))
+  ∎
 
 
----
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (mono ds₁) (mono (mono (mono x₁)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (mono ds₂)) (mono (mono (mono x₂)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (mono ds₃))) (mono (mono (mono x₃)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (delta (mono x₃) (mono ds₄)))) (mono (mono (mono x₄)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (delta (mono x₃) (delta (mono x₄) ds₅)))) (mono (mono (mono x₅)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (delta (mono x₃) (delta (delta x₄ (mono x₅)) ds₅)))) (mono (mono (mono x₆)))))) = refl
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (delta (mono x₃) (delta (delta x₄ (delta x₅ ds₄)) ds₅)))) (mono (mono (mono x₆)))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (mono x₂) (delta (delta x₃ ds₃) ds₄))) (mono (mono (mono x₄)))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (mono x₁) (delta (delta x₂ ds₂) ds₃)) (mono (mono (mono x₃)))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta (delta (delta x₁ ds₁) ds₂) (mono (mono (mono x₂)))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta ds₁ (mono (mono (delta x₁ ds₂)))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta ds₁ (mono (delta ds₂ ds₃))))) = {!!}
-monad-law-1-1 x (delta (mono d) (delta (mono ds) (delta ds₁ (delta ds₂ ds₃)))) = {!!}
---
-monad-law-1-1 x (delta (mono d) (delta (delta ds ds₁) ds₂)) = {!!}
-monad-law-1-1 x (delta (delta d dd) ds) = {!!}
 
 
 

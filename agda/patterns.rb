@@ -163,8 +163,8 @@ end
 
 
 
-patterns   = ['(mono _)', '(delta T2 T3)']
-operations = ['T3'].cycle(3).to_a + ['T2'].cycle(6).to_a + ['T1'].cycle(12).to_a
+patterns   = ['(delta T2 (delta T2 (delta T2 _)))']
+operations = ['T2'].cycle(2).to_a + ['T1'].cycle(4).to_a
 
 
 patterns = generate_patterns(patterns, operations)
@@ -173,3 +173,4 @@ puts patterns.size
 function_body = generate_function('monad-law-1', pattern_formatter(patterns), 'refl')
 agda          = generate_agda(function_body)
 File.open('hoge.agda', 'w').write(agda)
+binding.pry
