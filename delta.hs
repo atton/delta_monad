@@ -11,9 +11,9 @@ deltaAppend :: Delta a -> Delta a -> Delta a
 deltaAppend (Mono x) d     = Delta x d
 deltaAppend (Delta x d) ds = Delta x (deltaAppend d ds)
 
-headDelta :: Delta a -> Delta a
-headDelta d@(Mono  _) = d
-headDelta (Delta x _) = Mono x
+headDelta :: Delta a -> a
+headDelta (Mono  x)   = x
+headDelta (Delta x _) = x
 
 tailDelta :: Delta a -> Delta a
 tailDelta d@(Mono _)   = d
@@ -34,7 +34,7 @@ instance Applicative Delta where
 
 bind :: (Delta a) -> (a -> Delta b) -> (Delta b)
 bind (Mono x)    f = f x
-bind (Delta x d) f = (headDelta (f x)) `deltaAppend` (bind d (tailDelta . f))
+bind (Delta x d) f = Delta (headDelta (f x)) (bind d (tailDelta . f))
 
 mu :: (Delta (Delta a)) -> (Delta a)
 mu d = bind d id
