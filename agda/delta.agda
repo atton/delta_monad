@@ -188,25 +188,55 @@ monad-law-1-5 (S m) (S n) (delta d ds) = begin
   bind (n-tail (S n) (delta d ds)) (n-tail (S m + S n))
   ∎
 
-monad-law-1-4 : {l : Level} {A : Set l} -> (n : Int) -> (dd : Delta (Delta A)) ->
-  headDelta ((n-tail n) (bind dd tailDelta)) ≡ headDelta ((n-tail (S n)) (headDelta (n-tail n dd))) 
-monad-law-1-4 O (mono dd) = refl
-monad-law-1-4 O (delta dd dd₁) = refl
-monad-law-1-4 (S n) (mono dd) = begin
-  headDelta (n-tail (S n) (bind (mono dd) tailDelta)) ≡⟨ refl ⟩
-  headDelta (n-tail (S n) (tailDelta dd)) ≡⟨ cong (\t -> headDelta (t dd)) (n-tail-plus (S n)) ⟩
-  headDelta (n-tail (S (S n)) dd) ≡⟨ refl ⟩
-  headDelta (n-tail (S (S n)) (headDelta (mono dd))) ≡⟨ cong (\de -> headDelta (n-tail (S (S n)) (headDelta de))) (sym (tail-delta-to-mono (S n) dd)) ⟩
-  headDelta (n-tail (S (S n)) (headDelta (n-tail (S n) (mono dd))))
+monad-law-1-4 : {l : Level} {A : Set l} -> (m n : Int) -> (dd : Delta (Delta A)) ->
+  headDelta ((n-tail n) (bind dd (n-tail m))) ≡ headDelta ((n-tail (m + n)) (headDelta (n-tail n dd))) 
+monad-law-1-4 O O (mono dd) = refl
+monad-law-1-4 O O (delta dd dd₁) = refl
+monad-law-1-4 O (S n) (mono dd) = begin
+  headDelta (n-tail (S n) (bind (mono dd) (n-tail O))) ≡⟨ refl ⟩
+  headDelta (n-tail (S n) dd)  ≡⟨ refl ⟩
+  headDelta (n-tail (S n) (headDelta (mono dd))) ≡⟨ cong (\de -> headDelta (n-tail (S n) (headDelta de))) (sym (tail-delta-to-mono (S n) dd)) ⟩
+  headDelta (n-tail (S n) (headDelta (n-tail (S n) (mono dd)))) ≡⟨ refl ⟩
+  headDelta (n-tail (O + S n) (headDelta (n-tail (S n) (mono dd))))
   ∎
-monad-law-1-4 (S n) (delta d ds) = begin
-  headDelta (n-tail (S n) (bind (delta d ds) tailDelta)) ≡⟨ refl ⟩
-  headDelta (n-tail (S n) (delta (headDelta (tailDelta d)) (bind ds (tailDelta ∙  tailDelta)))) ≡⟨ cong (\t -> headDelta (t (delta (headDelta (tailDelta d)) (bind ds (tailDelta ∙  tailDelta))))) (sym (n-tail-plus n)) ⟩
-  headDelta (((n-tail n) ∙ tailDelta) (delta (headDelta (tailDelta d)) (bind ds (tailDelta ∙  tailDelta)))) ≡⟨ refl ⟩
-  headDelta (n-tail n (bind ds (tailDelta ∙  tailDelta))) ≡⟨ {!!} ⟩
-  headDelta (n-tail (S (S n)) (headDelta ((n-tail n ds)))) ≡⟨ refl ⟩
-  headDelta (n-tail (S (S n)) (headDelta ((n-tail n ∙ tailDelta) (delta d ds)))) ≡⟨ cong (\t ->  headDelta (n-tail (S (S n)) (headDelta (t (delta d ds))))) (n-tail-plus n) ⟩
-  headDelta (n-tail (S (S n)) (headDelta (n-tail (S n) (delta d ds))))
+monad-law-1-4 O (S n) (delta d ds) = begin
+  headDelta (n-tail (S n) (bind (delta d ds) (n-tail O))) ≡⟨ refl ⟩
+  headDelta (n-tail (S n) (bind (delta d ds) id)) ≡⟨ refl ⟩
+  headDelta (n-tail (S n) (delta (headDelta d) (bind ds tailDelta))) ≡⟨ cong (\t -> headDelta (t (delta (headDelta d) (bind ds tailDelta)))) (sym (n-tail-plus n)) ⟩
+  headDelta (((n-tail n) ∙ tailDelta) (delta (headDelta d) (bind ds tailDelta))) ≡⟨ refl ⟩
+  headDelta (n-tail n (bind ds tailDelta)) ≡⟨ monad-law-1-4 (S O) n ds ⟩
+  headDelta (n-tail (S n) (headDelta (n-tail n ds))) ≡⟨ refl ⟩
+  headDelta (n-tail (S n) (headDelta (((n-tail n) ∙ tailDelta) (delta d ds)))) ≡⟨ cong (\t -> headDelta (n-tail (S n) (headDelta (t (delta d ds))))) (n-tail-plus n)  ⟩
+  headDelta (n-tail (S n) (headDelta (n-tail (S n) (delta d ds)))) ≡⟨ refl ⟩
+  headDelta (n-tail (O + S n) (headDelta (n-tail (S n) (delta d ds))))
+  ∎
+monad-law-1-4 (S m) n (mono dd) = begin
+  headDelta (n-tail n (bind (mono dd) (n-tail (S m)))) ≡⟨ refl ⟩
+  headDelta (n-tail n ((n-tail (S m)) dd))≡⟨ cong (\t -> headDelta (t dd)) (n-tail-add n (S m)) ⟩
+  headDelta (n-tail (n + S m) dd) ≡⟨ cong (\n -> headDelta ((n-tail n) dd)) (int-add-assoc n (S m)) ⟩
+  headDelta (n-tail (S m + n) dd) ≡⟨ refl ⟩
+  headDelta (n-tail (S m + n) (headDelta (mono dd))) ≡⟨ cong (\de -> headDelta (n-tail (S m + n) (headDelta de))) (sym (tail-delta-to-mono n dd)) ⟩
+  headDelta (n-tail (S m + n) (headDelta (n-tail n (mono dd))))
+  ∎
+monad-law-1-4 (S m) O (delta d ds) = begin
+  headDelta (n-tail O (bind (delta d ds) (n-tail (S m)))) ≡⟨ refl ⟩
+  headDelta (bind (delta d ds) (n-tail (S m))) ≡⟨ refl ⟩
+  headDelta (delta (headDelta ((n-tail (S m) d))) (bind ds (tailDelta ∙ (n-tail (S m))))) ≡⟨ refl ⟩
+  headDelta (n-tail (S m) d) ≡⟨ cong (\n -> headDelta ((n-tail n) d)) (int-add-right-zero (S m)) ⟩
+  headDelta (n-tail (S m + O) d) ≡⟨ refl ⟩
+  headDelta (n-tail (S m + O) (headDelta (delta d ds))) ≡⟨ refl ⟩
+  headDelta (n-tail (S m + O) (headDelta (n-tail O (delta d ds))))
+  ∎
+monad-law-1-4 (S m) (S n) (delta d ds) = begin
+  headDelta (n-tail (S n) (bind (delta d ds) (n-tail (S m)))) ≡⟨ refl ⟩
+  headDelta (n-tail (S n) (delta (headDelta ((n-tail (S m)) d)) (bind ds (tailDelta ∙ (n-tail (S m)))))) ≡⟨ cong (\t -> headDelta (t (delta (headDelta ((n-tail (S m)) d)) (bind ds (tailDelta ∙ (n-tail (S m))))))) (sym (n-tail-plus n)) ⟩
+  headDelta ((((n-tail n) ∙ tailDelta) (delta (headDelta ((n-tail (S m)) d)) (bind ds (tailDelta ∙ (n-tail (S m))))))) ≡⟨ refl ⟩
+  headDelta (n-tail n (bind ds (tailDelta ∙ (n-tail (S m))))) ≡⟨ refl ⟩
+  headDelta (n-tail n (bind ds  (n-tail (S (S m))))) ≡⟨ monad-law-1-4 (S (S m)) n ds ⟩
+  headDelta (n-tail ((S (S m) +  n)) (headDelta (n-tail n ds))) ≡⟨ cong (\nm -> headDelta ((n-tail nm) (headDelta (n-tail n ds)))) (sym (int-add-right m n))  ⟩ 
+  headDelta (n-tail (S m + S n) (headDelta (n-tail n ds))) ≡⟨ refl ⟩ 
+  headDelta (n-tail (S m + S n) (headDelta (((n-tail n) ∙ tailDelta) (delta d ds)))) ≡⟨ cong (\t -> headDelta (n-tail (S m + S n) (headDelta (t (delta d ds))))) (n-tail-plus n) ⟩
+  headDelta (n-tail (S m + S n) (headDelta (n-tail (S n) (delta d ds))))
   ∎
 
 monad-law-1-2 : {l : Level} {A : Set l} -> (d : Delta (Delta A)) -> headDelta (mu d) ≡ (headDelta (headDelta d))
@@ -268,7 +298,7 @@ monad-law-1-3 (S n) (delta (delta d dd) ds) = begin
   delta (headDelta (((n-tail n) ∙ tailDelta) (delta (headDelta d) (bind dd tailDelta)))) (bind (fmap mu ds) (tailDelta ∙ (n-tail (S n)))) ≡⟨ refl ⟩
   delta (headDelta ((n-tail n) (bind dd tailDelta))) (bind (fmap mu ds) (tailDelta ∙ (n-tail (S n)))) ≡⟨ refl ⟩
   delta (headDelta ((n-tail n) (bind dd tailDelta))) (bind (fmap mu ds) (n-tail (S (S n)))) ≡⟨ cong (\de -> delta (headDelta ((n-tail n) (bind dd tailDelta))) de) (monad-law-1-3 (S (S n)) ds) ⟩
-  delta (headDelta ((n-tail n) (bind dd tailDelta))) (bind (bind  ds (n-tail (S (S n))))  (n-tail (S (S n)))) ≡⟨ cong (\de -> delta de ( (bind (bind  ds (n-tail (S (S n))))  (n-tail (S (S n)))))) (monad-law-1-4 n dd) ⟩
+  delta (headDelta ((n-tail n) (bind dd tailDelta))) (bind (bind  ds (n-tail (S (S n))))  (n-tail (S (S n)))) ≡⟨ cong (\de -> delta de ( (bind (bind  ds (n-tail (S (S n))))  (n-tail (S (S n)))))) (monad-law-1-4 (S O) n dd) ⟩
   delta (headDelta ((n-tail (S n)) (headDelta (n-tail n dd)))) (bind (bind  ds (n-tail (S (S n))))  (n-tail (S (S n)))) ≡⟨ refl ⟩
   delta (headDelta ((n-tail (S n)) (headDelta (n-tail n dd)))) (bind (bind  ds (n-tail (S (S n)))) (tailDelta ∙ (n-tail (S n)))) ≡⟨ refl ⟩
   delta (headDelta ((n-tail (S n)) (headDelta (n-tail n dd)))) (bind (bind  ds (tailDelta ∙ (n-tail (S n)))) (tailDelta ∙ (n-tail (S n)))) ≡⟨ refl ⟩
