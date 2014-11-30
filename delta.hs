@@ -5,6 +5,11 @@ import Data.Numbers.Primes -- $ cabal install primes
 
 data Delta a = Mono a | Delta a (Delta a) deriving Show
 
+instance (Eq a) => Eq (Delta a) where
+    (Mono x) == (Mono y)         = x == y
+    (Mono _) == (Delta _ _)      = False
+    (Delta x xs) == (Delta y ys) = (x == y) && (xs == ys)
+
 -- basic functions
 
 deltaAppend :: Delta a -> Delta a -> Delta a
