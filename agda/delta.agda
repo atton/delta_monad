@@ -22,8 +22,8 @@ headDelta (mono x)    = x
 headDelta (delta x _) = x
 
 tailDelta : {l : Level} {A : Set l} -> Delta A -> Delta A
-tailDelta (mono x)     = mono x
-tailDelta (delta  _ d) = d
+tailDelta (mono x)    = mono x
+tailDelta (delta _ d) = d
 
 n-tail : {l : Level} {A : Set l} -> Nat -> ((Delta A) -> (Delta A))
 n-tail O = id
@@ -32,7 +32,7 @@ n-tail (S n) =  tailDelta ∙ (n-tail n)
 
 -- Functor
 fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
-fmap f (mono x)    = mono (f x)
+fmap f (mono x)    = mono  (f x)
 fmap f (delta x d) = delta (f x) (fmap f d)
 
 
@@ -71,7 +71,7 @@ _>>=_ : {l ll : Level} {A : Set l} {B : Set ll} ->
 -- sub-proofs
 
 n-tail-plus : {l : Level} {A : Set l} -> (n : Nat) -> ((n-tail {l} {A} n) ∙ tailDelta) ≡ n-tail (S n)
-n-tail-plus O = refl
+n-tail-plus O     = refl
 n-tail-plus (S n) = begin
   n-tail (S n) ∙ tailDelta             ≡⟨ refl ⟩
   (tailDelta ∙ (n-tail n)) ∙ tailDelta ≡⟨ refl ⟩
@@ -96,13 +96,39 @@ n-tail-add {l} {A} {d} (S n) (S m) =      begin
 
 tail-delta-to-mono : {l : Level} {A : Set l} -> (n : Nat) -> (x : A) ->
   (n-tail n) (mono x) ≡ (mono x)
-tail-delta-to-mono O x = refl
+tail-delta-to-mono O x     = refl
 tail-delta-to-mono (S n) x =      begin
   n-tail (S n) (mono x)           ≡⟨ refl ⟩
   tailDelta (n-tail n (mono x))   ≡⟨ refl ⟩
   tailDelta (n-tail n (mono x))   ≡⟨ cong (\t -> tailDelta t) (tail-delta-to-mono n x) ⟩
   tailDelta (mono x)              ≡⟨ refl ⟩
   mono x                          ∎
+
+head-delta-natural-transformation : {l ll : Level} {A : Set l} {B : Set ll} 
+  -> (f : A -> B) -> (d : Delta A) -> headDelta (fmap f d) ≡ f (headDelta d)
+head-delta-natural-transformation f (mono x)    = refl
+head-delta-natural-transformation f (delta x d) = refl 
+
+n-tail-natural-transformation  : {l ll : Level} {A : Set l} {B : Set ll}
+  -> (n : Nat) -> (f : A -> B) -> (d : Delta A) ->  n-tail n (fmap f d) ≡ fmap f (n-tail n d)
+n-tail-natural-transformation O f d            = refl
+n-tail-natural-transformation (S n) f (mono x) = begin
+  n-tail (S n) (fmap f (mono x))  ≡⟨ refl ⟩
+  n-tail (S n) (mono (f x))       ≡⟨ tail-delta-to-mono (S n) (f x) ⟩
+  (mono (f x))                    ≡⟨ refl ⟩
+  fmap f (mono x)                 ≡⟨ cong (\d -> fmap f d) (sym (tail-delta-to-mono (S n) x)) ⟩
+  fmap f (n-tail (S n) (mono x))  ∎
+n-tail-natural-transformation (S n) f (delta x d) = begin
+  n-tail (S n) (fmap f (delta x d))                 ≡⟨ refl ⟩
+  n-tail (S n) (delta (f x) (fmap f d))             ≡⟨ cong (\t -> t (delta (f x) (fmap f d))) (sym (n-tail-plus n)) ⟩
+  ((n-tail n) ∙ tailDelta) (delta (f x) (fmap f d)) ≡⟨ refl ⟩
+  n-tail n (fmap f d)                               ≡⟨ n-tail-natural-transformation n f d ⟩
+  fmap f (n-tail n d)                               ≡⟨ refl ⟩
+  fmap f (((n-tail n) ∙ tailDelta) (delta x d))     ≡⟨ cong (\t -> fmap f (t (delta x d))) (n-tail-plus n) ⟩
+  fmap f (n-tail (S n) (delta x d))                 ∎
+
+
+
 
 -- Functor-laws
 
@@ -382,15 +408,67 @@ monad-law-2' d = refl
 monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (eta ∙ f) x ≡ (fmap f ∙ eta) x
 monad-law-3 f x = refl
 
-{-
+
+monad-law-4-1 : {l ll : Level} {A : Set l} {B : Set ll} -> (n : Nat) -> (f : A -> B) -> (ds : Delta (Delta A)) ->
+  bind (fmap (fmap f) ds) (n-tail n) ≡ fmap f (bind ds (n-tail n))
+monad-law-4-1 O f (mono d)     = refl
+monad-law-4-1 O f (delta d ds) = begin
+  bind (fmap (fmap f) (delta d ds)) (n-tail O)                     ≡⟨ refl ⟩
+  bind (delta (fmap f d) (fmap (fmap f) ds)) (n-tail O)            ≡⟨ refl ⟩
+  delta (headDelta (fmap f d)) (bind (fmap (fmap f) ds) tailDelta) ≡⟨ cong (\de -> delta de (bind (fmap (fmap f) ds) tailDelta)) (head-delta-natural-transformation f d) ⟩
+  delta (f (headDelta d))      (bind (fmap (fmap f) ds) tailDelta) ≡⟨ cong (\de -> delta (f (headDelta d)) de) (monad-law-4-1 (S O) f ds) ⟩
+  delta (f (headDelta d))      (fmap f (bind ds tailDelta))        ≡⟨ refl ⟩
+  fmap f (delta (headDelta d) (bind ds tailDelta))                 ≡⟨ refl ⟩
+  fmap f (bind (delta d ds) (n-tail O))                            ∎
+monad-law-4-1 (S n) f (mono d) = begin
+  bind (fmap (fmap f) (mono d)) (n-tail (S n)) ≡⟨ refl ⟩
+  bind (mono (fmap f d)) (n-tail (S n))        ≡⟨ refl ⟩
+  n-tail (S n) (fmap f d)                      ≡⟨ n-tail-natural-transformation (S n) f d ⟩
+  fmap f (n-tail (S n) d)                      ≡⟨ refl ⟩
+  fmap f (bind (mono d) (n-tail (S n)))
+  ∎
+monad-law-4-1 (S n) f (delta d ds) = begin
+  bind (fmap (fmap f) (delta d ds)) (n-tail (S n)) ≡⟨ refl ⟩
+  delta (headDelta (n-tail (S n) (fmap f d))) (bind (fmap (fmap f) ds) (tailDelta ∙ (n-tail (S n))))  ≡⟨ refl ⟩
+  delta (headDelta (n-tail (S n) (fmap f d))) (bind (fmap (fmap f) ds) (n-tail (S (S n))))            ≡⟨ cong (\de ->   delta (headDelta de) (bind (fmap (fmap f) ds) (n-tail (S (S n))))) (n-tail-natural-transformation (S n) f d) ⟩
+  delta (headDelta (fmap f ((n-tail (S n) d)))) (bind (fmap (fmap f) ds) (n-tail (S (S n))))          ≡⟨ cong (\de -> delta de (bind (fmap (fmap f) ds) (n-tail (S (S n))))) (head-delta-natural-transformation f (n-tail (S n) d)) ⟩
+  delta (f (headDelta (n-tail (S n) d))) (bind (fmap (fmap f) ds) (n-tail (S (S n))))                 ≡⟨ cong (\de -> delta (f (headDelta (n-tail (S n) d))) de) (monad-law-4-1 (S (S n)) f ds) ⟩
+  delta (f (headDelta (n-tail (S n) d))) (fmap f (bind ds (n-tail (S (S n)))))                        ≡⟨ refl ⟩
+  fmap f (delta (headDelta (n-tail (S n) d)) (bind ds (n-tail (S (S n)))))                            ≡⟨ refl ⟩
+  fmap f (delta (headDelta (n-tail (S n) d)) (bind ds (tailDelta ∙ (n-tail (S n)))))                  ≡⟨ refl ⟩
+  fmap f (bind (delta d ds) (n-tail (S n)))                                                           ∎
+
+
 -- monad-law-4 : join . fmap (fmap f) = fmap f . join
 monad-law-4 : {l ll : Level} {A : Set l} {B : Set ll} (f : A -> B) (d : Delta (Delta A)) ->
               (mu ∙ fmap (fmap f)) d ≡ (fmap f ∙ mu) d
-monad-law-4 f d = {!!}
+monad-law-4 f (mono d)     = refl
+monad-law-4 f (delta (mono x) ds) = begin
+  (mu ∙ fmap (fmap f)) (delta (mono x) ds)                           ≡⟨ refl ⟩
+  mu ( fmap (fmap f) (delta (mono x) ds))                            ≡⟨ refl ⟩
+  mu (delta (mono (f x)) (fmap (fmap f) ds))                         ≡⟨ refl ⟩
+  delta (headDelta (mono (f x))) (bind (fmap (fmap f) ds) tailDelta) ≡⟨ refl ⟩
+  delta (f x) (bind (fmap (fmap f) ds) tailDelta)                    ≡⟨ cong (\de -> delta (f x) de) (monad-law-4-1 (S O) f ds) ⟩
+  delta (f x) (fmap f (bind ds tailDelta))                           ≡⟨ refl ⟩
+  fmap f (delta x (bind ds tailDelta))                               ≡⟨ refl ⟩
+  fmap f (delta (headDelta (mono x)) (bind ds tailDelta))            ≡⟨ refl ⟩
+  fmap f (mu (delta (mono x) ds))                                    ≡⟨ refl ⟩
+  (fmap f ∙ mu) (delta (mono x) ds)                                  ∎
+monad-law-4 f (delta (delta x d) ds) = begin
+  (mu ∙ fmap (fmap f)) (delta (delta x d) ds)                                     ≡⟨ refl ⟩
+  mu (fmap (fmap f) (delta (delta x d) ds))                                       ≡⟨ refl ⟩
+  mu  (delta (delta (f x) (fmap f d)) (fmap (fmap f) ds))                         ≡⟨ refl ⟩
+  delta (headDelta (delta (f x) (fmap f d)))  (bind (fmap (fmap f) ds) tailDelta) ≡⟨ refl ⟩
+  delta (f x)  (bind (fmap (fmap f) ds) tailDelta)                                ≡⟨ cong (\de -> delta (f x) de) (monad-law-4-1 (S O) f ds) ⟩
+  delta (f x) (fmap f (bind  ds tailDelta))                                       ≡⟨ refl ⟩
+  fmap f (delta x (bind  ds tailDelta))                                           ≡⟨ refl ⟩
+  fmap f (delta (headDelta (delta x d)) (bind  ds tailDelta))                     ≡⟨ refl ⟩
+  fmap f (mu (delta (delta x d) ds))                                              ≡⟨ refl ⟩
+  (fmap f ∙ mu) (delta (delta x d) ds) ∎
 
 
 
-
+{-
 -- Monad-laws (Haskell)
 -- monad-law-h-1 : return a >>= k  =  k a
 monad-law-h-1 : {l ll : Level} {A : Set l} {B : Set ll} ->
