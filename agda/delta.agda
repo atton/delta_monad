@@ -80,7 +80,6 @@ functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
 -- Monad-laws (Category)
 
-
 data Int : Set where
   O  : Int
   S : Int -> Int
@@ -88,43 +87,49 @@ data Int : Set where
 _+_ : Int -> Int -> Int
 O + n = n
 (S m) + n = S (m + n)
-
-n-tail : {l : Level} {A : Set l} -> Int -> ((Delta A) -> (Delta A))
-n-tail O = id
-n-tail (S n) =  tailDelta ∙ (n-tail n)
-
-flip  : {l : Level} {A : Set l} -> (f : A -> A) -> f ∙ (f ∙ f) ≡ (f ∙ f) ∙ f
-flip f = refl
-
-n-tail-plus : {l : Level} {A : Set l} -> (n : Int) -> ((n-tail {l} {A} n) ∙ tailDelta) ≡ n-tail (S n)
-n-tail-plus O = refl
-n-tail-plus (S n) = begin
-  n-tail (S n) ∙ tailDelta ≡⟨ refl ⟩
-  (tailDelta ∙ (n-tail n)) ∙ tailDelta ≡⟨ refl ⟩
-  tailDelta ∙ ((n-tail n) ∙ tailDelta) ≡⟨ cong (\t -> tailDelta ∙ t) (n-tail-plus n) ⟩
-  n-tail (S (S n))
-  ∎
-
-postulate  n-tail-add : {l : Level} {A : Set l} -> (n m : Int) -> (n-tail {l} {A} n) ∙ (n-tail m) ≡ n-tail (n + m)
 postulate int-add-assoc : (n m : Int) -> n + m ≡ m + n
 postulate int-add-right-zero : (n : Int) -> n  ≡ n + O
 postulate int-add-right : (n m : Int) -> S n + S m ≡ S (S (n + m))
 
 
 
+n-tail : {l : Level} {A : Set l} -> Int -> ((Delta A) -> (Delta A))
+n-tail O = id
+n-tail (S n) =  tailDelta ∙ (n-tail n)
 
+n-tail-plus : {l : Level} {A : Set l} -> (n : Int) -> ((n-tail {l} {A} n) ∙ tailDelta) ≡ n-tail (S n)
+n-tail-plus O = refl
+n-tail-plus (S n) = begin
+  n-tail (S n) ∙ tailDelta             ≡⟨ refl ⟩
+  (tailDelta ∙ (n-tail n)) ∙ tailDelta ≡⟨ refl ⟩
+  tailDelta ∙ ((n-tail n) ∙ tailDelta) ≡⟨ cong (\t -> tailDelta ∙ t) (n-tail-plus n) ⟩
+  n-tail (S (S n))
+  ∎
 
+n-tail-add : {l : Level} {A : Set l} {d : Delta A} -> (n m : Int) -> (n-tail {l} {A} n) ∙ (n-tail m) ≡ n-tail (n + m)
+n-tail-add O m = refl
+n-tail-add (S n) O = begin
+  n-tail (S n) ∙ n-tail O  ≡⟨ refl ⟩
+  n-tail (S n)             ≡⟨ cong (\n -> n-tail n) (int-add-right-zero (S n))⟩
+  n-tail (S n + O)
+  ∎
+n-tail-add {l} {A} {d} (S n) (S m) =      begin
+  n-tail (S n) ∙ n-tail (S m)             ≡⟨ refl ⟩
+  (tailDelta ∙ (n-tail n)) ∙ n-tail (S m) ≡⟨ refl ⟩
+  tailDelta ∙ ((n-tail n) ∙ n-tail (S m)) ≡⟨ cong (\t -> tailDelta ∙ t) (n-tail-add {l} {A} {d} n (S m)) ⟩
+  tailDelta ∙ (n-tail (n + (S m)))        ≡⟨ refl ⟩
+  n-tail (S (n + S m))                    ≡⟨ refl ⟩
+  n-tail (S n + S m)                      ∎
 
 tail-delta-to-mono : {l : Level} {A : Set l} -> (n : Int) -> (x : A) ->
   (n-tail n) (mono x) ≡ (mono x)
 tail-delta-to-mono O x = refl
-tail-delta-to-mono (S n) x =  begin
+tail-delta-to-mono (S n) x =      begin
   n-tail (S n) (mono x)           ≡⟨ refl ⟩
   tailDelta (n-tail n (mono x))   ≡⟨ refl ⟩
   tailDelta (n-tail n (mono x))   ≡⟨ cong (\t -> tailDelta t) (tail-delta-to-mono n x) ⟩
   tailDelta (mono x)              ≡⟨ refl ⟩
-  mono x
-  ∎
+  mono x                          ∎
 
 monad-law-1-5 : {l : Level} {A : Set l} -> (m : Int) (n : Int) -> (ds : Delta (Delta A)) ->
   n-tail n (bind ds (n-tail m))  ≡ bind (n-tail n ds) (n-tail (m + n)) 
