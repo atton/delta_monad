@@ -1,4 +1,5 @@
 import Control.Applicative
+import Control.Monad.Writer
 import Data.Numbers.Primes -- $ cabal install primes
 
 -- delta definition
@@ -106,6 +107,12 @@ tailDeltaM   (DeltaM (Delta _ d)) = DeltaM d
 appendDeltaM :: DeltaM m a -> DeltaM m a -> DeltaM m a
 appendDeltaM (DeltaM d) (DeltaM dd) = DeltaM (deltaAppend d dd)
 
+checkOut :: Int -> DeltaM m a -> m a
+checkOut 0 (DeltaM (Mono x))    = x
+checkOut 0 (DeltaM (Delta x _)) = x
+checkOut n (DeltaM (Mono x))    = x
+checkOut n (DeltaM (Delta _ d)) = checkOut (n-1) (DeltaM d)
+
 
 -- DeltaM instance definitions
 
@@ -128,10 +135,35 @@ instance (Monad m) => Monad (DeltaM m) where
 
 -- DeltaM examples
 
-val :: DeltaM [] Int
-val = DeltaM $ deltaFromList [[10, 20], [1, 2, 3], [100,200,300], [0]]
+-- DeltaM example utils
+type DeltaLog = Writer [String]
 
-func :: Int -> DeltaM [] Int
-func x = DeltaM $ deltaFromList [[x+1, x+2, x+3],
-                                 [x*x],
-                                 [x, x, x, x]]
+returnW :: (Show a) => a -> DeltaLog a
+returnW x = do tell $ [show x]
+               return x
+
+dmap :: (m a -> b) -> DeltaM m a -> Delta b
+dmap f (DeltaM (Mono mx))   = (Mono $ f mx)
+dmap f (DeltaM (Delta x d)) = Delta (f x) (dmap f (DeltaM d))
+
+
+-- example : prime filter
+-- usage   : runWriter $ checkOut 0 $ primeCountM 30  -- run specific version
+--         : dmap runWriter $ primeCountM 30          -- run all version
+
+generatorM :: Int -> DeltaM DeltaLog [Int]
+generatorM x = let intList = returnW [1..x] in
+                             DeltaM $ deltaFromList $  [intList, intList]
+
+primeFilterM :: [Int] -> DeltaM DeltaLog [Int]
+primeFilterM xs = let primeList    = filter isPrime xs
+                      refactorList = filter even xs    in
+                      DeltaM $ deltaFromList $ fmap returnW [primeList, refactorList]
+
+
+countM :: [Int] -> DeltaM DeltaLog Int
+countM xs = let primeCount = length xs in
+                DeltaM $ deltaFromList $ fmap returnW [primeCount, primeCount]
+
+primeCountM :: Int -> DeltaM DeltaLog Int
+primeCountM x = generatorM x >>= primeFilterM >>= countM
