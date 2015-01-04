@@ -48,8 +48,6 @@ instance Monad Delta where
     return x = Mono x
     d >>= f  = mu $ fmap f d
 
-
-
 -- utils
 
 returnS :: (Show s) => s -> Delta s
@@ -89,3 +87,51 @@ bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnSS (sortedValueL : xs)
         sortedValueL = maximumValue
         sortedValueR = replicate (length $ filter (== maximumValue) xs) maximumValue
         remainValue  = filter (/= maximumValue) xs
+
+-- DeltaM Definition (Delta with Monad)
+
+data DeltaM m a = DeltaM (Delta (m a)) deriving (Show)
+
+
+-- DeltaM utils
+
+headDeltaM :: DeltaM m a -> m a
+headDeltaM (DeltaM (Mono x))     = x
+headDeltaM (DeltaM (Delta x _ )) = x
+
+tailDeltaM :: DeltaM m a -> DeltaM m a
+tailDeltaM d@(DeltaM (Mono _))    = d
+tailDeltaM   (DeltaM (Delta _ d)) = DeltaM d
+
+appendDeltaM :: DeltaM m a -> DeltaM m a -> DeltaM m a
+appendDeltaM (DeltaM d) (DeltaM dd) = DeltaM (deltaAppend d dd)
+
+
+-- DeltaM instance definitions
+
+instance (Functor m) => Functor (DeltaM m) where
+    fmap f (DeltaM d) = DeltaM $ fmap (fmap f) d
+
+instance (Applicative m) => Applicative (DeltaM m) where
+    pure f                                          = DeltaM $ Mono $ pure f
+    (DeltaM (Mono f))     <*> (DeltaM (Mono x))     = DeltaM $ Mono $ f <*> x
+    df@(DeltaM (Mono f))  <*> (DeltaM (Delta x d))  = appendDeltaM (DeltaM $ Mono $ f <*> x) (df <*> (DeltaM d))
+    (DeltaM (Delta f df)) <*> dx@(DeltaM (Mono x))  = appendDeltaM (DeltaM $ Mono $ f <*> x) ((DeltaM df) <*> dx)
+    (DeltaM (Delta f df)) <*> (DeltaM (Delta x dx)) = appendDeltaM (DeltaM $ Mono $ f <*> x) ((DeltaM df) <*> (DeltaM dx))
+
+instance (Monad m) => Monad (DeltaM m) where
+    return x                   = DeltaM $ Mono $ return x
+    (DeltaM (Mono x))    >>= f = DeltaM $ Mono $ (x >>= headDeltaM . f)
+    (DeltaM (Delta x d)) >>= f = appendDeltaM ((DeltaM $ Mono x) >>= f)
+                                              ((DeltaM d) >>= tailDeltaM . f)
+
+
+-- DeltaM examples
+
+val :: DeltaM [] Int
+val = DeltaM $ deltaFromList [[10, 20], [1, 2, 3], [100,200,300], [0]]
+
+func :: Int -> DeltaM [] Int
+func x = DeltaM $ deltaFromList [[x+1, x+2, x+3],
+                                 [x*x],
+                                 [x, x, x, x]]
