@@ -51,11 +51,8 @@ instance Monad Delta where
 
 -- utils
 
-returnS :: (Show s) => s -> Delta s
-returnS x = Mono x
-
-returnSS :: (Show s) => s -> s -> Delta s
-returnSS x y = (returnS x) `deltaAppend` (returnS y)
+returnDD :: (Show s) => s -> s -> Delta s
+returnDD x y = (return x) `deltaAppend` (return y)
 
 deltaFromList :: [a] -> Delta a
 deltaFromList = (foldl1 deltaAppend) . (fmap return)
@@ -65,23 +62,23 @@ deltaFromList = (foldl1 deltaAppend) . (fmap return)
 
 generator :: Int -> Delta [Int]
 generator x = let intList = [1..x] in
-                  returnS intList
+                  return intList
 
 primeFilter :: [Int] -> Delta [Int]
 primeFilter xs = let primeList    = filter isPrime xs
                      refactorList = filter even xs    in
-                 returnSS primeList refactorList
+                 returnDD primeList refactorList
 
 count :: [Int] -> Delta Int
 count xs = let primeCount = length xs in
-           returnS primeCount
+           return primeCount
 
 primeCount :: Int -> Delta Int
 primeCount x = generator x >>= primeFilter >>= count
 
 bubbleSort :: [Int] -> Delta [Int]
-bubbleSort [] = returnS []
-bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnSS (sortedValueL : xs)
+bubbleSort [] = return []
+bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnDD (sortedValueL : xs)
                                                             (sortedValueR ++ xs))
     where
         maximumValue = maximum xs
@@ -136,7 +133,8 @@ instance (Monad m) => Monad (DeltaM m) where
 -- DeltaM examples
 
 -- DeltaM example utils
-type DeltaLog = Writer [String]
+type DeltaLog     = Writer [String]
+type DeltaWithLog = DeltaM DeltaLog
 
 returnW :: (Show a) => a -> DeltaLog a
 returnW x = do tell $ [show x]
@@ -151,19 +149,19 @@ dmap f (DeltaM (Delta x d)) = Delta (f x) (dmap f (DeltaM d))
 -- usage   : runWriter $ checkOut 0 $ primeCountM 30  -- run specific version
 --         : dmap runWriter $ primeCountM 30          -- run all version
 
-generatorM :: Int -> DeltaM DeltaLog [Int]
+generatorM :: Int -> DeltaWithLog [Int]
 generatorM x = let intList = returnW [1..x] in
                              DeltaM $ deltaFromList $  [intList, intList]
 
-primeFilterM :: [Int] -> DeltaM DeltaLog [Int]
+primeFilterM :: [Int] -> DeltaWithLog [Int]
 primeFilterM xs = let primeList    = filter isPrime xs
                       refactorList = filter even xs    in
                       DeltaM $ deltaFromList $ fmap returnW [primeList, refactorList]
 
 
-countM :: [Int] -> DeltaM DeltaLog Int
+countM :: [Int] -> DeltaWithLog Int
 countM xs = let primeCount = length xs in
                 DeltaM $ deltaFromList $ fmap returnW [primeCount, primeCount]
 
-primeCountM :: Int -> DeltaM DeltaLog Int
+primeCountM :: Int -> DeltaWithLog Int
 primeCountM x = generatorM x >>= primeFilterM >>= countM
