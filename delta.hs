@@ -2,7 +2,7 @@ import Control.Applicative
 import Control.Monad.Writer
 import Data.Numbers.Primes -- $ cabal install primes
 
--- delta definition
+-- Delta definition
 
 data Delta a = Mono a | Delta a (Delta a) deriving Show
 
@@ -86,7 +86,9 @@ bubbleSort xs = bubbleSort remainValue >>= (\xs -> returnDD (sortedValueL : xs)
         sortedValueR = replicate (length $ filter (== maximumValue) xs) maximumValue
         remainValue  = filter (/= maximumValue) xs
 
--- DeltaM Definition (Delta with Monad)
+
+
+-- DeltaM definition (Delta with Monad)
 
 data DeltaM m a = DeltaM (Delta (m a)) deriving (Show)
 
@@ -141,8 +143,7 @@ returnW x = do tell $ [show x]
                return x
 
 dmap :: (m a -> b) -> DeltaM m a -> Delta b
-dmap f (DeltaM (Mono mx))   = (Mono $ f mx)
-dmap f (DeltaM (Delta x d)) = Delta (f x) (dmap f (DeltaM d))
+dmap f (DeltaM d) = fmap f d
 
 
 -- example : prime filter
@@ -150,8 +151,8 @@ dmap f (DeltaM (Delta x d)) = Delta (f x) (dmap f (DeltaM d))
 --         : dmap runWriter $ primeCountM 30          -- run all version
 
 generatorM :: Int -> DeltaWithLog [Int]
-generatorM x = let intList = returnW [1..x] in
-                             DeltaM $ deltaFromList $  [intList, intList]
+generatorM x = let intList = [1..x] in
+                             DeltaM $ deltaFromList $ fmap returnW $ replicate 2 intList
 
 primeFilterM :: [Int] -> DeltaWithLog [Int]
 primeFilterM xs = let primeList    = filter isPrime xs
@@ -161,7 +162,7 @@ primeFilterM xs = let primeList    = filter isPrime xs
 
 countM :: [Int] -> DeltaWithLog Int
 countM xs = let primeCount = length xs in
-                DeltaM $ deltaFromList $ fmap returnW [primeCount, primeCount]
+                DeltaM $ deltaFromList $ fmap returnW $ replicate 2 primeCount
 
 primeCountM :: Int -> DeltaWithLog Int
 primeCountM x = generatorM x >>= primeFilterM >>= countM
