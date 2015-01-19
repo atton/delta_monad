@@ -6,18 +6,18 @@ module laws where
 
 record Functor {l : Level} (F : Set l -> Set l) : (Set (suc l)) where
   field
-    fmap : ∀{A B} -> (A -> B) -> (F A) -> (F B)
+    fmap : {A B : Set l} -> (A -> B) -> (F A) -> (F B)
   field
-    preserve-id : ∀{A} (x : F A) → fmap id x ≡ id x
-    covariant   : ∀{A B C} (f : A -> B) -> (g : B -> C) -> (x : F A)
-                    -> fmap (g ∙ f) x ≡ ((fmap g) ∙  (fmap f)) x
+    preserve-id : {A : Set l} (x : F A) → fmap id x ≡ id x
+    covariant   : {A B C : Set l} (f : A -> B) -> (g : B -> C) -> (x : F A)
+                    -> fmap (g ∙ f) x ≡ ((fmap g) ∙ (fmap f)) x
 open Functor
 
 
 
-record NaturalTransformation {l ll : Level} (F G : Set l -> Set l)
+record NaturalTransformation {l : Level} (F G : Set l -> Set l)
                                             (functorF : Functor F)
-                                            (functorG : Functor G) : Set (suc (l ⊔ ll)) where
+                                            (functorG : Functor G) : Set (suc l) where
   field
     natural-transformation : {A : Set l}  -> F A -> G A
   field

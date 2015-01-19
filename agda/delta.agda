@@ -42,7 +42,7 @@ delta-fmap f (delta x d) = delta (f x) (delta-fmap f d)
 eta : {l : Level} {A : Set l} -> A -> Delta A
 eta x = mono x
 
-bind : {l ll : Level} {A : Set l} {B : Set ll} -> (Delta A) -> (A -> Delta B) -> Delta B
+bind : {l : Level} {A B : Set l} -> (Delta A) -> (A -> Delta B) -> Delta B
 bind (mono x)    f = f x
 bind (delta x d) f = delta (headDelta (f x)) (bind d (tailDelta ∙ f))
 
@@ -60,7 +60,7 @@ returnSS x y = deltaAppend (returnS x) (returnS y)
 return : {l : Level} {A : Set l} -> A -> Delta A
 return = eta
 
-_>>=_ : {l ll : Level} {A : Set l} {B : Set ll} ->
+_>>=_ : {l : Level} {A B : Set l} ->
         (x : Delta A) -> (f : A -> (Delta B)) -> (Delta B)
 (mono x) >>= f    = f x
 (delta x d) >>= f = delta (headDelta (f x)) (d >>= (tailDelta ∙ f))

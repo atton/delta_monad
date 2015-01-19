@@ -54,11 +54,11 @@ checkOut O     (deltaM (delta x _)) = x
 checkOut (S n) (deltaM (mono x))    = x
 checkOut {l} {A} {M} {functorM} {monadM} (S n) (deltaM (delta _ d)) = checkOut {l} {A} {M} {functorM} {monadM} n (deltaM d)
 
-{-
-deltaM-fmap : {l ll : Level} {A : Set l} {B : Set ll} 
-           {M : {l' : Level} -> Set l' -> Set l'}
-           {functorM : {l' : Level} -> Functor {l'} M}
-           {monadM : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
-           -> (A -> B) -> DeltaM M {functorM} {monadM} A -> DeltaM M {functorM} {monadM} B
-deltaM-fmap {l} {ll} {A} {B} {M} {functorM} f (deltaM d) = deltaM (Functor.fmap delta-is-functor (Functor.fmap functorM f) d)
--}
+
+open Functor
+deltaM-fmap : {l : Level} {A B : Set l}
+              {M : {l' : Level} -> Set l' -> Set l'}
+              {functorM : {l' : Level} -> Functor {l'} M}
+              {monadM : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
+              -> (A -> B) -> DeltaM M {functorM} {monadM} A -> DeltaM M {functorM} {monadM} B
+deltaM-fmap {l} {A} {B} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-functor (fmap functorM f) d)
