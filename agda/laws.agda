@@ -10,7 +10,7 @@ record Functor {l : Level} (F : Set l -> Set l) : (Set (suc l)) where
   field
     preserve-id : ∀{A} (x : F A) → fmap id x ≡ id x
     covariant   : ∀{A B C} (f : A -> B) -> (g : B -> C) -> (x : F A)
-                    -> fmap (g ∙ f) x ≡ fmap g (fmap f x)
+                    -> fmap (g ∙ f) x ≡ ((fmap g) ∙  (fmap f)) x
 open Functor
 
 

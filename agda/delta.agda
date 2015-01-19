@@ -1,6 +1,7 @@
 open import list
 open import basic
 open import nat
+open import laws
 
 open import Level
 open import Relation.Binary.PropositionalEquality
@@ -9,7 +10,7 @@ open ≡-Reasoning
 module delta where
 
 
-data Delta {l : Level} (A : Set l) : (Set (suc l)) where
+data Delta {l : Level} (A : Set l) : (Set l) where
   mono    : A -> Delta A
   delta   : A -> Delta A -> Delta A
 
@@ -130,21 +131,8 @@ n-tail-natural-transformation (S n) f (delta x d) = begin
 
 
 
--- Functor-laws
 
--- Functor-law-1 : T(id) = id'
-functor-law-1 :  {l : Level} {A : Set l} ->  (d : Delta A) -> (fmap id) d ≡ id d
-functor-law-1 (mono x)    = refl
-functor-law-1 (delta x d) = cong (delta x) (functor-law-1 d)
-
--- Functor-law-2 : T(f . g) = T(f) . T(g)
-functor-law-2 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
-                (f : B -> C) -> (g : A -> B) -> (d : Delta A) ->
-                (fmap (f ∙ g)) d ≡ ((fmap f) ∙ (fmap g)) d
-functor-law-2 f g (mono x)    = refl
-functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
-
-
+{-
 -- Monad-laws (Category)
 
 monad-law-1-5 : {l : Level} {A : Set l} -> (m : Nat) (n : Nat) -> (ds : Delta (Delta A)) ->
@@ -480,4 +468,5 @@ monad-law-h-3 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
 monad-law-h-3 (mono x) k h    = refl
 monad-law-h-3 (delta x d) k h = {!!}
 
+-}
 -}
