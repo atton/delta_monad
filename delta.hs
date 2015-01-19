@@ -128,7 +128,7 @@ instance (Applicative m) => Applicative (DeltaM m) where
 instance (Monad m) => Monad (DeltaM m) where
     return x                   = DeltaM $ Mono $ return x
     (DeltaM (Mono x))    >>= f = DeltaM $ Mono $ (x >>= headDeltaM . f)
-    (DeltaM (Delta x d)) >>= f = appendDeltaM ((DeltaM $ Mono x) >>= f)
+    (DeltaM (Delta x d)) >>= f = appendDeltaM (DeltaM $ Mono $ (x >>= (headDeltaM . f)))
                                               ((DeltaM d) >>= tailDeltaM . f)
 
 

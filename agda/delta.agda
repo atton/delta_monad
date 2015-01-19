@@ -39,30 +39,25 @@ delta-fmap f (delta x d) = delta (f x) (delta-fmap f d)
 
 
 -- Monad (Category)
-eta : {l : Level} {A : Set l} -> A -> Delta A
-eta x = mono x
+delta-eta : {l : Level} {A : Set l} -> A -> Delta A
+delta-eta x = mono x
 
-bind : {l : Level} {A B : Set l} -> (Delta A) -> (A -> Delta B) -> Delta B
-bind (mono x)    f = f x
-bind (delta x d) f = delta (headDelta (f x)) (bind d (tailDelta ∙ f))
+delta-bind : {l : Level} {A B : Set l} -> (Delta A) -> (A -> Delta B) -> Delta B
+delta-bind (mono x)    f = f x
+delta-bind (delta x d) f = delta (headDelta (f x)) (delta-bind d (tailDelta ∙ f))
 
-mu : {l : Level} {A : Set l} -> Delta (Delta A) -> Delta A
-mu d = bind d id
+delta-mu : {l : Level} {A : Set l} -> Delta (Delta A) -> Delta A
+delta-mu d = delta-bind d id
 
-returnS : {l : Level} {A : Set l} -> A -> Delta A
-returnS x = mono x
-
-returnSS : {l : Level} {A : Set l} -> A -> A -> Delta A
-returnSS x y = deltaAppend (returnS x) (returnS y)
 
 
 -- Monad (Haskell)
-return : {l : Level} {A : Set l} -> A -> Delta A
-return = eta
+delta-return : {l : Level} {A : Set l} -> A -> Delta A
+delta-return = delta-eta
 
 _>>=_ : {l : Level} {A B : Set l} ->
         (x : Delta A) -> (f : A -> (Delta B)) -> (Delta B)
-(mono x) >>= f    = f x
+(mono x)    >>= f = f x
 (delta x d) >>= f = delta (headDelta (f x)) (d >>= (tailDelta ∙ f))
 
 

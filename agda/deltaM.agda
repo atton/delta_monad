@@ -1,5 +1,6 @@
 open import Level
 
+open import basic
 open import delta
 open import delta.functor
 open import nat
@@ -55,6 +56,8 @@ checkOut (S n) (deltaM (mono x))    = x
 checkOut {l} {A} {M} {functorM} {monadM} (S n) (deltaM (delta _ d)) = checkOut {l} {A} {M} {functorM} {monadM} n (deltaM d)
 
 
+
+-- functor definitions
 open Functor
 deltaM-fmap : {l : Level} {A B : Set l}
               {M : {l' : Level} -> Set l' -> Set l'}
@@ -62,3 +65,25 @@ deltaM-fmap : {l : Level} {A B : Set l}
               {monadM : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
               -> (A -> B) -> DeltaM M {functorM} {monadM} A -> DeltaM M {functorM} {monadM} B
 deltaM-fmap {l} {A} {B} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-functor (fmap functorM f) d)
+
+-- monad definitions
+open Monad
+deltaM-eta : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'}
+                                        {functorM : {l' : Level} -> Functor {l'} M}
+                                        {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
+            -> A -> (DeltaM M {functorM} {monadM} A)
+deltaM-eta {_} {A} {_} {_} {_} {monadM} x = deltaM (mono (eta {_} {A} monadM x))
+
+deltaM-bind : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'} 
+                                        {functorM : {l' : Level} -> Functor {l'} M}
+                                        {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
+            -> (DeltaM M {functorM} {monadM} A) -> (A -> DeltaM M {functorM} {monadM} B) -> DeltaM M {functorM} {monadM} B
+deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (mono x))    f = deltaM (mono (bind {l} {A} monadM x (headDeltaM ∙ f)))
+deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (delta x d)) f = appendDeltaM (deltaM (mono (bind {l} {A} monadM x (headDeltaM ∙ f))))
+                                                                                      (deltaM-bind (deltaM d) (tailDeltaM ∙ f))
+
+deltaM-mu : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'}
+                                        {functorM : {l' : Level} -> Functor {l'} M}
+                                        {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
+            -> (DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A)) -> DeltaM M {functorM} {monadM} A
+deltaM-mu d = deltaM-bind d id
