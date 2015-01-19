@@ -32,9 +32,9 @@ n-tail (S n) =  tailDelta ∙ (n-tail n)
 
 
 -- Functor
-fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
-fmap f (mono x)    = mono  (f x)
-fmap f (delta x d) = delta (f x) (fmap f d)
+delta-fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
+delta-fmap f (mono x)    = mono  (f x)
+delta-fmap f (delta x d) = delta (f x) (delta-fmap f d)
 
 
 
@@ -106,29 +106,24 @@ tail-delta-to-mono (S n) x =      begin
   mono x                          ∎
 
 head-delta-natural-transformation : {l ll : Level} {A : Set l} {B : Set ll}
-  -> (f : A -> B) -> (d : Delta A) -> headDelta (fmap f d) ≡ f (headDelta d)
+  -> (f : A -> B) -> (d : Delta A) -> headDelta (delta-fmap f d) ≡ f (headDelta d)
 head-delta-natural-transformation f (mono x)    = refl
 head-delta-natural-transformation f (delta x d) = refl
 
 n-tail-natural-transformation  : {l ll : Level} {A : Set l} {B : Set ll}
-  -> (n : Nat) -> (f : A -> B) -> (d : Delta A) ->  n-tail n (fmap f d) ≡ fmap f (n-tail n d)
+  -> (n : Nat) -> (f : A -> B) -> (d : Delta A) ->  n-tail n (delta-fmap f d) ≡ delta-fmap f (n-tail n d)
 n-tail-natural-transformation O f d            = refl
 n-tail-natural-transformation (S n) f (mono x) = begin
-  n-tail (S n) (fmap f (mono x))  ≡⟨ refl ⟩
+  n-tail (S n) (delta-fmap f (mono x))  ≡⟨ refl ⟩
   n-tail (S n) (mono (f x))       ≡⟨ tail-delta-to-mono (S n) (f x) ⟩
   (mono (f x))                    ≡⟨ refl ⟩
-  fmap f (mono x)                 ≡⟨ cong (\d -> fmap f d) (sym (tail-delta-to-mono (S n) x)) ⟩
-  fmap f (n-tail (S n) (mono x))  ∎
+  delta-fmap f (mono x)                 ≡⟨ cong (\d -> delta-fmap f d) (sym (tail-delta-to-mono (S n) x)) ⟩
+  delta-fmap f (n-tail (S n) (mono x))  ∎
 n-tail-natural-transformation (S n) f (delta x d) = begin
-  n-tail (S n) (fmap f (delta x d))                 ≡⟨ refl ⟩
-  n-tail (S n) (delta (f x) (fmap f d))             ≡⟨ cong (\t -> t (delta (f x) (fmap f d))) (sym (n-tail-plus n)) ⟩
-  ((n-tail n) ∙ tailDelta) (delta (f x) (fmap f d)) ≡⟨ refl ⟩
-  n-tail n (fmap f d)                               ≡⟨ n-tail-natural-transformation n f d ⟩
-  fmap f (n-tail n d)                               ≡⟨ refl ⟩
-  fmap f (((n-tail n) ∙ tailDelta) (delta x d))     ≡⟨ cong (\t -> fmap f (t (delta x d))) (n-tail-plus n) ⟩
-  fmap f (n-tail (S n) (delta x d))                 ∎
-
-
-
-
-
+  n-tail (S n) (delta-fmap f (delta x d))                 ≡⟨ refl ⟩
+  n-tail (S n) (delta (f x) (delta-fmap f d))             ≡⟨ cong (\t -> t (delta (f x) (delta-fmap f d))) (sym (n-tail-plus n)) ⟩
+  ((n-tail n) ∙ tailDelta) (delta (f x) (delta-fmap f d)) ≡⟨ refl ⟩
+  n-tail n (delta-fmap f d)                               ≡⟨ n-tail-natural-transformation n f d ⟩
+  delta-fmap f (n-tail n d)                               ≡⟨ refl ⟩
+  delta-fmap f (((n-tail n) ∙ tailDelta) (delta x d))     ≡⟨ cong (\t -> delta-fmap f (t (delta x d))) (n-tail-plus n) ⟩
+  delta-fmap f (n-tail (S n) (delta x d))                 ∎
