@@ -18,7 +18,7 @@ functor-law-1 (delta x d) = cong (delta x) (functor-law-1 d)
 -- Functor-law-2 : T(f . g) = T(f) . T(g)
 functor-law-2 : {l : Level} {A B C : Set l} -> 
                 (f : B -> C) -> (g : A -> B) -> (d : Delta A) ->
-                (delta-fmap (f ∙ g)) d ≡ (delta-fmap f) (delta-fmap g d)
+                (delta-fmap (f ∙ g)) d ≡ ((delta-fmap f) ∙ (delta-fmap g)) d
 functor-law-2 f g (mono x)    = refl
 functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
