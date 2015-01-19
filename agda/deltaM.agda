@@ -82,7 +82,7 @@ deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (mono x))    f = deltaM 
 deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (delta x d)) f = appendDeltaM (deltaM (mono (bind {l} {A} monadM x (headDeltaM ∙ f))))
                                                                                       (deltaM-bind (deltaM d) (tailDeltaM ∙ f))
 
-deltaM-mu : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'}
+deltaM-mu : {l : Level} {A : Set l} {M : {l' : Level} -> Set l' -> Set l'}
                                         {functorM : {l' : Level} -> Functor {l'} M}
                                         {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
             -> (DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A)) -> DeltaM M {functorM} {monadM} A
