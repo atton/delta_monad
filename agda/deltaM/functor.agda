@@ -24,8 +24,20 @@ deltaM-preserve-id functorM (deltaM (mono x))  = begin
   deltaM (mono (id x))                                       ≡⟨ cong (\x -> deltaM (mono x)) refl ⟩
   deltaM (mono x)                                            ∎
 deltaM-preserve-id functorM (deltaM (delta x d)) = begin
-  deltaM-fmap id (deltaM (delta x d))                           ≡⟨ refl ⟩ 
-  deltaM (fmap delta-is-functor (fmap functorM id) (delta x d)) ≡⟨ {!!} ⟩
+  deltaM-fmap id (deltaM (delta x d))                           
+  ≡⟨ refl ⟩ 
+  deltaM (fmap delta-is-functor (fmap functorM id) (delta x d))
+  ≡⟨ refl ⟩
+  deltaM (delta (fmap functorM id x) (fmap delta-is-functor (fmap functorM id) d))
+  ≡⟨ cong (\x -> deltaM (delta x (fmap delta-is-functor (fmap functorM id) d))) (preserve-id functorM x) ⟩
+  deltaM (delta x (fmap delta-is-functor (fmap functorM id) d))
+  ≡⟨ refl ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM (fmap delta-is-functor (fmap functorM id) d))
+  ≡⟨ refl ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM-fmap id (deltaM d))
+  ≡⟨ cong (\d -> appendDeltaM (deltaM (mono x)) d) (deltaM-preserve-id functorM (deltaM d)) ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM d)
+  ≡⟨ refl ⟩
   deltaM (delta x d)
   ∎
 
