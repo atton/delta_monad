@@ -22,7 +22,7 @@ functor-law-2 : {l : Level} {A B C : Set l} ->
 functor-law-2 f g (mono x)    = refl
 functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
-delta-is-functor : {l : Level} -> Functor (Delta {l})
+delta-is-functor : {l : Level} -> Functor {l} Delta 
 delta-is-functor = record {  fmap = delta-fmap ;
                              preserve-id = functor-law-1;
                              covariant  = \f g -> functor-law-2 g f}
