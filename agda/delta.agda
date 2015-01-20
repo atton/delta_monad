@@ -32,7 +32,7 @@ n-tail (S n) =  tailDelta ∙ (n-tail n)
 
 
 -- Functor
-delta-fmap : {l ll : Level} {A : Set l} {B : Set ll} -> (A -> B) -> (Delta A) -> (Delta B)
+delta-fmap : {l : Level} {A B : Set l} -> (A -> B) -> (Delta A) -> (Delta B)
 delta-fmap f (mono x)    = mono  (f x)
 delta-fmap f (delta x d) = delta (f x) (delta-fmap f d)
 
@@ -100,12 +100,12 @@ tail-delta-to-mono (S n) x =      begin
   tailDelta (mono x)              ≡⟨ refl ⟩
   mono x                          ∎
 
-head-delta-natural-transformation : {l ll : Level} {A : Set l} {B : Set ll}
+head-delta-natural-transformation : {l : Level} {A B : Set l}
   -> (f : A -> B) -> (d : Delta A) -> headDelta (delta-fmap f d) ≡ f (headDelta d)
 head-delta-natural-transformation f (mono x)    = refl
 head-delta-natural-transformation f (delta x d) = refl
 
-n-tail-natural-transformation  : {l ll : Level} {A : Set l} {B : Set ll}
+n-tail-natural-transformation  : {l  : Level} {A B : Set l} 
   -> (n : Nat) -> (f : A -> B) -> (d : Delta A) ->  n-tail n (delta-fmap f d) ≡ delta-fmap f (n-tail n d)
 n-tail-natural-transformation O f d            = refl
 n-tail-natural-transformation (S n) f (mono x) = begin

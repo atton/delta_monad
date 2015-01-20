@@ -128,7 +128,7 @@ monad-law-1-4 (S m) (S n) (delta d ds) = begin
   ∎
 
 monad-law-1-2 : {l : Level} {A : Set l} -> (d : Delta (Delta A)) -> headDelta (delta-mu d) ≡ (headDelta (headDelta d))
-monad-law-1-2 (mono _) = refl
+monad-law-1-2 (mono _)    = refl
 monad-law-1-2 (delta _ _) = refl
 
 monad-law-1-3 : {l : Level} {A : Set l} -> (n : Nat) -> (d : Delta (Delta (Delta A))) ->
@@ -265,7 +265,7 @@ monad-law-3 : {l : Level} {A B : Set l} (f : A -> B) (x : A) -> (delta-eta ∙ f
 monad-law-3 f x = refl
 
 
-monad-law-4-1 : {l ll : Level} {A : Set l} {B : Set ll} -> (n : Nat) -> (f : A -> B) -> (ds : Delta (Delta A)) ->
+monad-law-4-1 : {l  : Level} {A B : Set l} -> (n : Nat) -> (f : A -> B) -> (ds : Delta (Delta A)) ->
   delta-bind (delta-fmap (delta-fmap f) ds) (n-tail n) ≡ delta-fmap f (delta-bind ds (n-tail n))
 monad-law-4-1 O f (mono d)     = refl
 monad-law-4-1 O f (delta d ds) = begin
@@ -332,28 +332,35 @@ delta-is-monad = record { eta    = delta-eta;
                           right-unity-law = monad-law-2' }
 
 
+
 {-
+
 -- Monad-laws (Haskell)
 -- monad-law-h-1 : return a >>= k  =  k a
-monad-law-h-1 : {l ll : Level} {A : Set l} {B : Set ll} ->
+monad-law-h-1 : {l : Level} {A B : Set l} -> 
                 (a : A) -> (k : A -> (Delta B)) ->
-                (return a >>= k)  ≡ (k a)
+                (delta-return a >>= k)  ≡ (k a)
 monad-law-h-1 a k = refl
 
 
 
 -- monad-law-h-2 : m >>= return  =  m
-monad-law-h-2 : {l : Level}{A : Set l} -> (m : Delta A) -> (m >>= return)  ≡ m
+monad-law-h-2 : {l : Level}{A : Set l} -> (m : Delta A) -> (m >>= delta-return)  ≡ m
 monad-law-h-2 (mono x)    = refl
 monad-law-h-2 (delta x d) = cong (delta x) (monad-law-h-2 d)
 
 
--- monad-law-h-3 : m >>= (\x -> k x >>= h)  =  (m >>= k) >>= h
-monad-law-h-3 : {l ll lll : Level} {A : Set l} {B : Set ll} {C : Set lll} ->
-                (m : Delta A)  -> (k : A -> (Delta B)) -> (h : B -> (Delta C)) ->
-                (m >>= (\x -> k x >>= h)) ≡ ((m >>= k) >>= h)
-monad-law-h-3 (mono x) k h    = refl
-monad-law-h-3 (delta x d) k h = {!!}
+
+-- monad-law-h-3 : m >>= (\x -> f x >>= g)  =  (m >>= f) >>= g
+monad-law-h-3 : {l : Level} {A B C : Set l} -> 
+                (m : Delta A)  -> (f : A -> (Delta B)) -> (g : B -> (Delta C)) ->
+                (delta-bind m (\x -> delta-bind (f x) g)) ≡ (delta-bind (delta-bind m f) g)
+monad-law-h-3 (mono x) f g     = refl
+monad-law-h-3 (delta x d) f g = begin
+  (delta-bind (delta x d) (\x -> delta-bind (f x) g)) ≡⟨ {!!} ⟩
+  (delta-bind (delta-bind (delta x d) f) g) ∎
+
+
+
 
 -}
-
