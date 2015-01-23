@@ -26,16 +26,16 @@ headDeltaM : {l : Level} {A : Set l}
              {functorM : {l' : Level} -> Functor {l'} M}
              {monadM : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
              -> DeltaM M {functorM} {monadM} A -> M A
-headDeltaM (deltaM (mono x))    = x
-headDeltaM (deltaM (delta x _)) = x
+headDeltaM (deltaM d) = headDelta d
+
 
 tailDeltaM :  {l : Level} {A : Set l}
              {M : {l' : Level} -> Set l' -> Set l'}
              {functorM : {l' : Level} -> Functor {l'} M}
              {monadM : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}                                                                 
              -> DeltaM M {functorM} {monadM} A -> DeltaM M {functorM} {monadM} A
-tailDeltaM (deltaM (mono x))    = deltaM (mono x)
-tailDeltaM (deltaM (delta _ d)) = deltaM d
+tailDeltaM (deltaM d)    = deltaM (tailDelta d)
+
 
 appendDeltaM : {l : Level} {A : Set l}
              {M : {l' : Level} -> Set l' -> Set l'}
@@ -74,16 +74,24 @@ deltaM-eta : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'}
             -> A -> (DeltaM M {functorM} {monadM} A)
 deltaM-eta {_} {A} {_} {_} {_} {monadM} x = deltaM (mono (eta {_} {A} monadM x))
 
-deltaM-bind : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'} 
-                                        {functorM : {l' : Level} -> Functor {l'} M}
-                                        {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
-            -> (DeltaM M {functorM} {monadM} A) -> (A -> DeltaM M {functorM} {monadM} B) -> DeltaM M {functorM} {monadM} B
-deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (mono x))    f = deltaM (mono (bind {l} {A} monadM x (headDeltaM ∙ f)))
-deltaM-bind {l} {A} {B} {M} {functorM} {monadM} (deltaM (delta x d)) f = appendDeltaM (deltaM (mono (bind {l} {A} monadM x (headDeltaM ∙ f))))
-                                                                                      (deltaM-bind (deltaM d) (tailDeltaM ∙ f))
-
 deltaM-mu : {l : Level} {A : Set l} {M : {l' : Level} -> Set l' -> Set l'}
                                         {functorM : {l' : Level} -> Functor {l'} M}
                                         {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
             -> (DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A)) -> DeltaM M {functorM} {monadM} A
-deltaM-mu d = deltaM-bind d id
+deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (mono x))               = deltaM (mono (bind {l} {A}  monadM x headDeltaM))
+deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (delta x (mono xx)))    = appendDeltaM (deltaM (mono (bind {l} {A} monadM x headDeltaM)))
+                                                                                         (deltaM-mu (deltaM (mono xx)))
+deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (delta x (delta xx d))) = appendDeltaM (deltaM (mono (bind {l} {A} monadM x headDeltaM)))
+                                                                                         (deltaM-mu (deltaM  d))
+-- original deltaM-mu definitions. but it's cannot termination checking.
+-- manually expand nested delta for delete tailDelta in argument to recursive deltaM-mu.
+{-
+deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (delta x d)) =  appendDeltaM (deltaM (mono (bind monadM x headDeltaM)))
+                                                                               (deltaM-mu (deltaM (tailDelta d)))
+-}
+
+deltaM-bind : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'} 
+                                        {functorM : {l' : Level} -> Functor {l'} M}
+                                        {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
+            -> (DeltaM M {functorM} {monadM} A) -> (A -> DeltaM M {functorM} {monadM} B) -> DeltaM M {functorM} {monadM} B
+deltaM-bind {l} {A} {B} {M} {functorM} {monadM} d    f = deltaM-mu (deltaM-fmap f d)
