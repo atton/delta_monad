@@ -96,12 +96,10 @@ data DeltaM m a = DeltaM (Delta (m a)) deriving (Show)
 -- DeltaM utils
 
 headDeltaM :: DeltaM m a -> m a
-headDeltaM (DeltaM (Mono x))     = x
-headDeltaM (DeltaM (Delta x _ )) = x
+headDeltaM (DeltaM d) = headDelta d
 
 tailDeltaM :: DeltaM m a -> DeltaM m a
-tailDeltaM d@(DeltaM (Mono _))    = d
-tailDeltaM   (DeltaM (Delta _ d)) = DeltaM d
+tailDeltaM (DeltaM d) = DeltaM $ tailDelta d
 
 appendDeltaM :: DeltaM m a -> DeltaM m a -> DeltaM m a
 appendDeltaM (DeltaM d) (DeltaM dd) = DeltaM (deltaAppend d dd)
@@ -125,11 +123,16 @@ instance (Applicative m) => Applicative (DeltaM m) where
     (DeltaM (Delta f df)) <*> dx@(DeltaM (Mono x))  = appendDeltaM (DeltaM $ Mono $ f <*> x) ((DeltaM df) <*> dx)
     (DeltaM (Delta f df)) <*> (DeltaM (Delta x dx)) = appendDeltaM (DeltaM $ Mono $ f <*> x) ((DeltaM df) <*> (DeltaM dx))
 
-instance (Monad m) => Monad (DeltaM m) where
-    return x                   = DeltaM $ Mono $ return x
-    (DeltaM (Mono x))    >>= f = DeltaM $ Mono $ (x >>= headDeltaM . f)
-    (DeltaM (Delta x d)) >>= f = appendDeltaM (DeltaM $ Mono $ (x >>= (headDeltaM . f)))
-                                              ((DeltaM d) >>= tailDeltaM . f)
+
+mu' :: (Functor m, Monad m) => DeltaM m (DeltaM m a) -> DeltaM m a
+mu' (DeltaM (Mono x))    = DeltaM $ Mono $ x >>= headDeltaM
+mu' (DeltaM (Delta x d)) = appendDeltaM (DeltaM $ Mono $ x >>= headDeltaM)
+                                        (mu' $ fmap tailDeltaM $ DeltaM d )
+
+instance (Functor m, Monad m) => Monad (DeltaM m) where
+    return x = DeltaM $ Mono $ return x
+    d >>= f  = mu' $ fmap f d
+
 
 
 -- DeltaM examples
@@ -144,6 +147,9 @@ returnW x = do tell $ [show x]
 
 dmap :: (m a -> b) -> DeltaM m a -> Delta b
 dmap f (DeltaM d) = fmap f d
+
+deltaWithLogFromList :: (Show a) => [a] -> DeltaWithLog a
+deltaWithLogFromList xs = DeltaM $ deltaFromList $ fmap returnW xs
 
 
 -- example : prime filter
