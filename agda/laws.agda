@@ -43,5 +43,8 @@ record Monad {l : Level} {A : Set l}
     association-law : (x : (M (M (M A)))) -> (mu ∙ (fmap functorM mu)) x ≡ (mu ∙ mu) x
     left-unity-law  : (x : M A) -> (mu  ∙ (fmap functorM eta)) x ≡ id x
     right-unity-law : (x : M A) -> id x ≡ (mu ∙ eta) x
+  field -- natural transformations
+    eta-is-nt : {B : Set l} -> (f : A -> B) -> (x : A) -> (eta ∙ f) x ≡ fmap functorM f (eta x)
+
 
 open Monad
