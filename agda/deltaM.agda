@@ -68,17 +68,17 @@ deltaM-fmap {l} {A} {B} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-func
 
 -- monad definitions
 open Monad
-deltaM-eta : {l : Level} {A B : Set l} {M : {l' : Level} -> Set l' -> Set l'}
+deltaM-eta : {l : Level} {A : Set l} {M : {l' : Level} -> Set l' -> Set l'}
                                         {functorM : {l' : Level} -> Functor {l'} M}
                                         {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
             -> A -> (DeltaM M {functorM} {monadM} A)
-deltaM-eta {_} {A} {_} {_} {_} {monadM} x = deltaM (mono (eta {_} {A} monadM x))
+deltaM-eta {_} {A} {_} {_} {monadM} x = deltaM (mono (eta {_} {A} monadM x))
 
 deltaM-mu : {l : Level} {A : Set l} {M : {l' : Level} -> Set l' -> Set l'}
                                         {functorM : {l' : Level} -> Functor {l'} M}
                                         {monadM   : {l' : Level} {A : Set l'} -> Monad {l'} {A} M functorM}
             -> (DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A)) -> DeltaM M {functorM} {monadM} A
-deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (mono x))               = deltaM (mono (bind {l} {A}  monadM x headDeltaM))
+deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (mono x))               = deltaM (mono (mu {l} {A} monadM (fmap functorM  headDeltaM x)))
 deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (delta x (mono xx)))    = appendDeltaM (deltaM (mono (bind {l} {A} monadM x headDeltaM)))
                                                                                          (deltaM-mu (deltaM (mono xx)))
 deltaM-mu {l} {A} {M} {functorM} {monadM} (deltaM (delta x (delta xx d))) = appendDeltaM (deltaM (mono (bind {l} {A} monadM x headDeltaM)))

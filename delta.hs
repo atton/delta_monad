@@ -125,8 +125,8 @@ instance (Applicative m) => Applicative (DeltaM m) where
 
 
 mu' :: (Functor m, Monad m) => DeltaM m (DeltaM m a) -> DeltaM m a
-mu' (DeltaM (Mono x))    = DeltaM $ Mono $ x >>= headDeltaM
-mu' (DeltaM (Delta x d)) = appendDeltaM (DeltaM $ Mono $ x >>= headDeltaM)
+mu' (DeltaM (Mono x))    = DeltaM $ Mono $ (>>= id) $ fmap headDeltaM x
+mu' (DeltaM (Delta x d)) = appendDeltaM (mu' $ DeltaM $ Mono x)
                                         (mu' $ fmap tailDeltaM $ DeltaM d )
 
 instance (Functor m, Monad m) => Monad (DeltaM m) where
