@@ -3,6 +3,7 @@ open import delta
 open import delta.functor
 open import nat
 open import laws
+open import revision
 
 
 open import Level
@@ -13,6 +14,7 @@ module delta.monad where
 
 
 -- Monad-laws (Category)
+{-
 
 monad-law-1-5 : {l : Level} {A : Set l} -> (m : Nat) (n : Nat) -> (ds : Delta (Delta A)) ->
   n-tail n (delta-bind ds (n-tail m))  ≡ delta-bind (n-tail n ds) (n-tail (m + n))
@@ -322,14 +324,25 @@ monad-law-4 f (delta (delta x d) ds) = begin
   delta-fmap f (delta-mu (delta (delta x d) ds))                                              ≡⟨ refl ⟩
   (delta-fmap f ∙ delta-mu) (delta (delta x d) ds) ∎
 
-delta-is-monad : {l : Level} -> Monad {l} Delta delta-is-functor
+-}
+-- monad-law-1 : join . delta-fmap join = join . join
+monad-law-1 : {l : Level} {A : Set l} {a : Rev} -> (d : Delta (Delta (Delta A a) a) a) ->
+            ((delta-mu ∙ (delta-fmap delta-mu)) d) ≡ ((delta-mu ∙ delta-mu) d)
+monad-law-1 (mono d)     = refl
+monad-law-1 (delta d ds) = {!!}
+
+delta-is-monad : {l : Level} {v : Rev} -> Monad {l} (\A -> Delta A v)  delta-is-functor
+
+
 delta-is-monad = record { eta    = delta-eta;
                           mu     = delta-mu;
                           return = delta-eta;
                           bind   = delta-bind;
-                          association-law = monad-law-1;
-                          left-unity-law  = monad-law-2;
-                          right-unity-law = monad-law-2' }
+                          association-law = monad-law-1 }
+--                          left-unity-law  = monad-law-2;
+--                          right-unity-law = monad-law-2' }
+
+
 
 
 
