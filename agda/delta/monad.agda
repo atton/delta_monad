@@ -322,7 +322,7 @@ monad-law-4 f (delta (delta x d) ds) = begin
   delta-fmap f (delta-mu (delta (delta x d) ds))                                              ≡⟨ refl ⟩
   (delta-fmap f ∙ delta-mu) (delta (delta x d) ds) ∎
 
-delta-is-monad : {l : Level} {A : Set l} -> Monad {l} {A} Delta delta-is-functor
+delta-is-monad : {l : Level} -> Monad {l} Delta delta-is-functor
 delta-is-monad = record { eta    = delta-eta;
                           mu     = delta-mu;
                           return = delta-eta;

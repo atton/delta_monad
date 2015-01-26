@@ -29,8 +29,7 @@ open NaturalTransformation
 
 
 -- simple Monad definition. without NaturalTransformation (mu, eta) and monad-law with f.
-record Monad {l : Level} {A : Set l}
-                         (M : {ll : Level} -> Set ll -> Set ll)
+record Monad {l : Level} (M : {ll : Level} -> Set ll -> Set ll)
                          (functorM : Functor {l} M)
                          : Set (suc l)  where
   field -- category
@@ -40,11 +39,11 @@ record Monad {l : Level} {A : Set l}
     return : {A : Set l} -> A -> M A
     bind   : {A B : Set l} -> M A -> (A -> (M B)) -> M B
   field -- category laws
-    association-law : (x : (M (M (M A)))) -> (mu ∙ (fmap functorM mu)) x ≡ (mu ∙ mu) x
-    left-unity-law  : (x : M A) -> (mu  ∙ (fmap functorM eta)) x ≡ id x
-    right-unity-law : (x : M A) -> id x ≡ (mu ∙ eta) x
+    association-law : {A : Set l} -> (x : (M (M (M A)))) -> (mu ∙ (fmap functorM mu)) x ≡ (mu ∙ mu) x
+    left-unity-law  : {A : Set l} -> (x : M A) -> (mu  ∙ (fmap functorM eta)) x ≡ id x
+    right-unity-law : {A : Set l} -> (x : M A) -> id x ≡ (mu ∙ eta) x
   field -- natural transformations
-    eta-is-nt : {B : Set l} -> (f : A -> B) -> (x : A) -> (eta ∙ f) x ≡ fmap functorM f (eta x)
+    eta-is-nt : {A B : Set l} -> (f : A -> B) -> (x : A) -> (eta ∙ f) x ≡ fmap functorM f (eta x)
 
 
 open Monad

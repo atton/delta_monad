@@ -4,7 +4,7 @@ open ≡-Reasoning
 module nat where
 
 data Nat : Set where
-  O  : Nat
+  O : Nat
   S : Nat -> Nat
 
 _+_ : Nat -> Nat -> Nat
