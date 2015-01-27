@@ -1,7 +1,6 @@
 open import list
 open import basic
 open import nat
-open import revision
 open import laws
 
 open import Level
@@ -10,42 +9,47 @@ open ≡-Reasoning
 
 module delta where
 
-data Delta {l : Level} (A : Set l) : (Rev -> (Set l)) where
-  mono    : A -> Delta A init
-  delta   : {v : Rev} -> A -> Delta A v -> Delta A (commit v)
+data Delta {l : Level} (A : Set l) : (Nat -> (Set l)) where
+  mono    : A -> Delta A (S O)
+  delta   : {n : Nat} -> A -> Delta A (S n) -> Delta A (S (S n))
 
-deltaAppend : {l : Level} {A : Set l} {n m : Rev} -> Delta A n -> Delta A m -> Delta A (merge n m)
+deltaAppend : {l : Level} {A : Set l} {n m : Nat} -> Delta A (S n) -> Delta A (S m) -> Delta A ((S n) + (S m))
 deltaAppend (mono x) d     = delta x d
 deltaAppend (delta x d) ds = delta x (deltaAppend d ds)
 
-headDelta : {l : Level} {A : Set l} {n : Rev} -> Delta A n -> A
+headDelta : {l : Level} {A : Set l} {n : Nat} -> Delta A (S n) -> A
 headDelta (mono x)    = x
 headDelta (delta x _) = x
 
-tailDelta : {l : Level} {A : Set l} {n : Rev} -> Delta A (commit n) -> Delta A n
+tailDelta : {l : Level} {A : Set l} {n : Nat} -> Delta A (S (S n)) -> Delta A (S n)
 tailDelta (delta _ d) = d
 
 
 
 -- Functor
-delta-fmap : {l : Level} {A B : Set l} {n : Rev} -> (A -> B) -> (Delta A n) -> (Delta B n)
+delta-fmap : {l : Level} {A B : Set l} {n : Nat} -> (A -> B) -> (Delta A (S n)) -> (Delta B (S n))
 delta-fmap f (mono x)    = mono  (f x)
 delta-fmap f (delta x d) = delta (f x) (delta-fmap f d)
 
 
 
 -- Monad (Category)
-delta-eta : {l : Level} {A : Set l} {v : Rev} -> A -> Delta A v
-delta-eta {v = init} x     = mono x
-delta-eta {v = commit v} x = delta x (delta-eta {v = v} x)
+delta-eta : {l : Level} {A : Set l} {n : Nat} -> A -> Delta A (S n)
+delta-eta {n = O}     x = mono x
+delta-eta {n = (S n)} x = delta x (delta-eta {n = n} x)
 
-delta-bind : {l : Level} {A B : Set l} {n : Rev} -> (Delta A n) -> (A -> Delta B n) -> Delta B n
-delta-bind (mono x) f    = f x
-delta-bind (delta x d) f = delta (headDelta (f x)) (tailDelta (f x))
 
-delta-mu : {l : Level} {A : Set l} {n : Rev} -> (Delta (Delta A n) n) -> Delta A n
-delta-mu d = delta-bind d id
 
+
+delta-mu : {l : Level} {A : Set l} {n : Nat} -> (Delta (Delta A (S n)) (S n)) -> Delta A (S n)
+delta-mu (mono x)    = x
+delta-mu (delta x d) = delta (headDelta x) (delta-mu (delta-fmap tailDelta d))
+
+delta-bind : {l : Level} {A B : Set l} {n : Nat} -> (Delta A (S n)) -> (A -> Delta B (S n)) -> Delta B (S n)
+delta-bind d f = delta-mu (delta-fmap f d)
+
+--delta-bind (mono x) f    = f x
+--delta-bind (delta x d) f = delta (headDelta (f x)) (tailDelta (f x))
 
 
 {-
