@@ -7,27 +7,26 @@ open import delta
 open import delta.functor
 open import deltaM
 open import nat
-open import revision
 open import laws
 open Functor
 
 module deltaM.functor where
 
 
-deltaM-preserve-id :  {l : Level} {A : Set l} {n : Rev}
+deltaM-preserve-id :  {l : Level} {A : Set l} {n : Nat}
                       {M : {l' : Level} -> Set l' -> Set l'}
                       (functorM : {l' : Level} -> Functor {l'} M)
                       {monadM   : {l' : Level} -> Monad {l'} M functorM}
-                      -> (d : DeltaM M {functorM} {monadM} A n) -> deltaM-fmap id d ≡ id d
+                      -> (d : DeltaM M {functorM} {monadM} A (S n)) -> deltaM-fmap id d ≡ id d
 deltaM-preserve-id functorM (deltaM (mono x))  = begin
   deltaM-fmap id (deltaM (mono x))                           ≡⟨ refl ⟩
   deltaM (fmap delta-is-functor (fmap functorM id) (mono x)) ≡⟨ refl ⟩
-  deltaM (mono (fmap functorM id x))                         ≡⟨ cong (\x -> deltaM (mono x)) (preserve-id functorM x) ⟩ 
+  deltaM (mono (fmap functorM id x))                         ≡⟨ cong (\x -> deltaM (mono x)) (preserve-id functorM x) ⟩
   deltaM (mono (id x))                                       ≡⟨ cong (\x -> deltaM (mono x)) refl ⟩
   deltaM (mono x)                                            ∎
 deltaM-preserve-id functorM (deltaM (delta x d)) = begin
-  deltaM-fmap id (deltaM (delta x d))                           
-  ≡⟨ refl ⟩ 
+  deltaM-fmap id (deltaM (delta x d))
+  ≡⟨ refl ⟩
   deltaM (fmap delta-is-functor (fmap functorM id) (delta x d))
   ≡⟨ refl ⟩
   deltaM (delta (fmap functorM id x) (fmap delta-is-functor (fmap functorM id) d))
@@ -44,20 +43,20 @@ deltaM-preserve-id functorM (deltaM (delta x d)) = begin
   ∎
 
 
-deltaM-covariant : {l : Level} {A B C : Set l} {n : Rev} ->
+deltaM-covariant : {l : Level} {A B C : Set l} {n : Nat} ->
                    {M : {l' : Level} -> Set l' -> Set l'}
                    (functorM : {l' : Level} -> Functor {l'} M)
                    {monadM   : {l' : Level} -> Monad {l'}  M functorM}
-                   (f : B -> C) -> (g : A -> B) -> (d : DeltaM M {functorM} {monadM} A n) ->
+                   (f : B -> C) -> (g : A -> B) -> (d : DeltaM M {functorM} {monadM} A (S n)) ->
                    (deltaM-fmap (f ∙ g)) d ≡ ((deltaM-fmap f) ∙ (deltaM-fmap g)) d
 deltaM-covariant functorM f g (deltaM (mono x))    = begin
-  deltaM-fmap (f ∙ g) (deltaM (mono x))                     ≡⟨ refl ⟩ 
-  deltaM (delta-fmap (fmap functorM (f ∙ g)) (mono x))      ≡⟨ refl ⟩ 
-  deltaM (mono (fmap functorM (f ∙ g) x))                   ≡⟨ cong (\x -> (deltaM (mono x))) (covariant functorM g f x) ⟩ 
-  deltaM (mono (((fmap functorM f) ∙ (fmap functorM g)) x)) ≡⟨ refl ⟩ 
+  deltaM-fmap (f ∙ g) (deltaM (mono x))                     ≡⟨ refl ⟩
+  deltaM (delta-fmap (fmap functorM (f ∙ g)) (mono x))      ≡⟨ refl ⟩
+  deltaM (mono (fmap functorM (f ∙ g) x))                   ≡⟨ cong (\x -> (deltaM (mono x))) (covariant functorM g f x) ⟩
+  deltaM (mono (((fmap functorM f) ∙ (fmap functorM g)) x)) ≡⟨ refl ⟩
   deltaM-fmap f (deltaM-fmap g (deltaM (mono x)))           ∎
 deltaM-covariant functorM f g (deltaM (delta x d)) = begin
-  deltaM-fmap (f ∙ g) (deltaM (delta x d))               
+  deltaM-fmap (f ∙ g) (deltaM (delta x d))
   ≡⟨ refl ⟩
   deltaM (delta-fmap (fmap functorM (f ∙ g)) (delta x d))
   ≡⟨ refl ⟩
@@ -81,11 +80,11 @@ deltaM-covariant functorM f g (deltaM (delta x d)) = begin
   ∎
 
 
-deltaM-is-functor : {l : Level} {n : Rev}
+deltaM-is-functor : {l : Level} {n : Nat}
                                 {M : {l' : Level} -> Set l' -> Set l'}
                                 {functorM : {l' : Level} -> Functor {l'} M }
                                 {monadM   : {l' : Level} -> Monad {l'} M functorM}
-                    -> Functor {l} (\A -> DeltaM M {functorM} {monadM} A n) 
-deltaM-is-functor {_} {_} {_} {functorM} = record { fmap        = deltaM-fmap ;
+                    -> Functor {l} (\A -> DeltaM M {functorM} {monadM} A (S n))
+deltaM-is-functor {_} {_} {_} {functorM} = record { fmap         = deltaM-fmap ;
                                                     preserve-id  = deltaM-preserve-id functorM ;
                                                     covariant    = (\f g -> deltaM-covariant functorM g f)}
