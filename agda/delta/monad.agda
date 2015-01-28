@@ -11,6 +11,33 @@ open ≡-Reasoning
 
 module delta.monad where
 
+tailDelta-is-nt : {l : Level} {A B : Set l} {n : Nat} 
+                  (f : A -> B) -> (d : Delta A (S (S n))) ->
+                  (tailDelta {n = n} ∙ (delta-fmap f)) d ≡ ((delta-fmap f) ∙ tailDelta {n = n}) d
+tailDelta-is-nt f (delta x d) = refl
+
+tailDelta-to-tail-nt : {l : Level} {A B : Set l} (n m  : Nat)
+                       (f : A -> B) (d : Delta (Delta A (S (S m))) (S n)) ->
+                   delta-fmap tailDelta (delta-fmap (delta-fmap f) d) ≡ delta-fmap (delta-fmap f) (delta-fmap tailDelta d)
+tailDelta-to-tail-nt O O f (mono (delta x d)) = refl
+tailDelta-to-tail-nt O (S m) f (mono (delta x d)) = refl
+tailDelta-to-tail-nt (S n) O f (delta (delta x (mono xx)) d) = begin
+  delta (mono (f xx))
+    (delta-fmap tailDelta (delta-fmap (delta-fmap f) d))
+  ≡⟨ cong (\de -> delta (mono (f xx)) de) (tailDelta-to-tail-nt n O f d) ⟩
+  delta (mono (f xx))
+    (delta-fmap (delta-fmap f) (delta-fmap tailDelta d))
+  ∎
+tailDelta-to-tail-nt (S n) (S m) f (delta (delta x (delta xx d)) ds) = begin
+  delta (delta (f xx) (delta-fmap f d))
+    (delta-fmap tailDelta (delta-fmap (delta-fmap f) ds)) 
+  ≡⟨ cong (\de -> delta (delta (f xx) (delta-fmap f d)) de) (tailDelta-to-tail-nt n (S m) f ds) ⟩
+  delta (delta (f xx) (delta-fmap f d))
+    (delta-fmap (delta-fmap f) (delta-fmap tailDelta ds))
+  ∎
+
+
+
 delta-eta-is-nt : {l : Level} {A B : Set l} -> {n : Nat}
                   (f : A -> B) -> (x : A) -> (delta-eta {n = n} ∙ f) x ≡ delta-fmap f (delta-eta x)
 delta-eta-is-nt {n = O}   f x = refl
@@ -23,16 +50,39 @@ delta-eta-is-nt {n = S n} f x = begin
   delta-fmap f (delta x (delta-eta x))     ≡⟨ refl ⟩
   delta-fmap f (delta-eta x)               ∎
 
+
 delta-mu-is-nt : {l : Level} {A B : Set l} {n : Nat} -> (f : A -> B) -> (d : Delta (Delta A (S n)) (S n))
                -> delta-mu (delta-fmap (delta-fmap f) d) ≡ delta-fmap f (delta-mu d)
-delta-mu-is-nt f d = {!!}
+delta-mu-is-nt {n = O} f (mono d) = refl
+delta-mu-is-nt {n = S n} f (delta (delta x d) ds) = begin
+  delta (f x) (delta-mu (delta-fmap tailDelta (delta-fmap (delta-fmap f) ds)))
+  ≡⟨ cong (\de -> delta (f x) (delta-mu de)) (tailDelta-to-tail-nt n n f ds ) ⟩
+  delta (f x) (delta-mu (delta-fmap (delta-fmap f) (delta-fmap tailDelta ds)))
+  ≡⟨ cong (\de -> delta (f x) de) (delta-mu-is-nt f (delta-fmap tailDelta ds)) ⟩
+  delta (f x) (delta-fmap f (delta-mu (delta-fmap tailDelta ds)))
+  ∎
 
-hoge : {l : Level} {A : Set l} {n : Nat} -> (ds : Delta (Delta A (S (S n))) (S (S n))) ->
-  (tailDelta {n = n} ∙ delta-mu {n = (S n)}) ds
+
+delta-fmap-mu-to-tail : {l : Level} {A : Set l} (n m : Nat) (d : Delta (Delta (Delta A (S (S m))) (S (S m))) (S n)) ->
+  delta-fmap tailDelta (delta-fmap delta-mu d)
   ≡
-  (((delta-mu {n = n}) ∙ (delta-fmap tailDelta)) ∙ tailDelta) ds
-hoge (delta ds ds₁) = refl
-
+  (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta d)))
+delta-fmap-mu-to-tail O O (mono (delta d ds)) = refl
+delta-fmap-mu-to-tail O (S n) (mono (delta (delta x (delta xx d)) (delta (delta dx (delta dxx dd)) ds))) = refl
+delta-fmap-mu-to-tail (S n) O (delta (delta (delta x (mono xx)) (mono (delta dx (mono dxx)))) ds) = begin
+  delta (mono dxx) (delta-fmap tailDelta (delta-fmap delta-mu ds)) 
+  ≡⟨ cong (\de -> delta (mono dxx) de) (delta-fmap-mu-to-tail n O ds) ⟩
+  delta (mono dxx)
+    (delta-fmap delta-mu
+     (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds)))
+  ∎
+delta-fmap-mu-to-tail (S n) (S n₁) (delta (delta (delta x (delta xx d)) (delta (delta dx (delta dxx dd)) ds)) dds) = begin
+  delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds))))
+    (delta-fmap tailDelta (delta-fmap delta-mu dds))
+  ≡⟨ cong (\de -> delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds)))) de) (delta-fmap-mu-to-tail n (S n₁) dds) ⟩
+  delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds))))
+    (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta dds)))
+  ∎
 
 
 
@@ -40,7 +90,25 @@ hoge (delta ds ds₁) = refl
 -- monad-law-1 : join . delta-fmap join = join . join
 monad-law-1 : {l : Level} {A : Set l} {n : Nat} (d : Delta (Delta (Delta A (S n)) (S n)) (S n)) ->
               ((delta-mu ∙ (delta-fmap delta-mu)) d) ≡ ((delta-mu ∙ delta-mu) d)
-monad-law-1 {n =   O} (mono d)     = refl
+monad-law-1 {n =       O} (mono d)                          = refl
+monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
+  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) 
+  ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-fmap-mu-to-tail n n ds) ⟩
+  delta x (delta-mu (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
+  ≡⟨ cong (\de -> delta x de) (monad-law-1 (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))) ⟩
+  delta x (delta-mu (delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
+  ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-mu-is-nt tailDelta (delta-fmap tailDelta ds) ) ⟩
+  delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds))))
+  ∎
+
+
+{-
+  begin
+  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) ≡⟨ {!!} ⟩
+  delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds))))
+  ∎
+-}
+{-
 monad-law-1 {n = S O} (delta (delta (delta _ _) _) (mono (delta (delta _ (mono _)) (mono (delta _ (mono _)))))) = refl
 monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
   (delta-mu ∙ delta-fmap delta-mu) (delta (delta (delta x d) dd) ds) ≡⟨ refl ⟩
@@ -69,6 +137,7 @@ monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
   delta-mu (delta-mu (delta (delta (delta x d) dd) ds)) ≡⟨ refl ⟩
   (delta-mu ∙ delta-mu) (delta (delta (delta x d) dd) ds)
   ∎
+-}
 {-
 begin
   (delta-mu ∙ delta-fmap delta-mu) (delta d ds) ≡⟨ refl ⟩
@@ -125,8 +194,6 @@ delta-left-unity-law {n = (S n)} (delta x d) = begin
 
 
 delta-is-monad : {l : Level} {n : Nat} -> Monad {l} (\A -> Delta A (S n))  delta-is-functor
-
-
 delta-is-monad = record { eta    = delta-eta;
                           mu     = delta-mu;
                           return = delta-eta;
