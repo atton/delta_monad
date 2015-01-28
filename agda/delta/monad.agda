@@ -11,10 +11,11 @@ open ≡-Reasoning
 
 module delta.monad where
 
-tailDelta-is-nt : {l : Level} {A B : Set l} {n : Nat} 
+tailDelta-is-nt : {l : Level} {A B : Set l} {n : Nat}
                   (f : A -> B) -> (d : Delta A (S (S n))) ->
                   (tailDelta {n = n} ∙ (delta-fmap f)) d ≡ ((delta-fmap f) ∙ tailDelta {n = n}) d
 tailDelta-is-nt f (delta x d) = refl
+
 
 tailDelta-to-tail-nt : {l : Level} {A B : Set l} (n m  : Nat)
                        (f : A -> B) (d : Delta (Delta A (S (S m))) (S n)) ->
@@ -30,12 +31,11 @@ tailDelta-to-tail-nt (S n) O f (delta (delta x (mono xx)) d) = begin
   ∎
 tailDelta-to-tail-nt (S n) (S m) f (delta (delta x (delta xx d)) ds) = begin
   delta (delta (f xx) (delta-fmap f d))
-    (delta-fmap tailDelta (delta-fmap (delta-fmap f) ds)) 
+    (delta-fmap tailDelta (delta-fmap (delta-fmap f) ds))
   ≡⟨ cong (\de -> delta (delta (f xx) (delta-fmap f d)) de) (tailDelta-to-tail-nt n (S m) f ds) ⟩
   delta (delta (f xx) (delta-fmap f d))
     (delta-fmap (delta-fmap f) (delta-fmap tailDelta ds))
   ∎
-
 
 
 delta-eta-is-nt : {l : Level} {A B : Set l} -> {n : Nat}
@@ -70,7 +70,7 @@ delta-fmap-mu-to-tail : {l : Level} {A : Set l} (n m : Nat) (d : Delta (Delta (D
 delta-fmap-mu-to-tail O O (mono (delta d ds)) = refl
 delta-fmap-mu-to-tail O (S n) (mono (delta (delta x (delta xx d)) (delta (delta dx (delta dxx dd)) ds))) = refl
 delta-fmap-mu-to-tail (S n) O (delta (delta (delta x (mono xx)) (mono (delta dx (mono dxx)))) ds) = begin
-  delta (mono dxx) (delta-fmap tailDelta (delta-fmap delta-mu ds)) 
+  delta (mono dxx) (delta-fmap tailDelta (delta-fmap delta-mu ds))
   ≡⟨ cong (\de -> delta (mono dxx) de) (delta-fmap-mu-to-tail n O ds) ⟩
   delta (mono dxx)
     (delta-fmap delta-mu
@@ -92,7 +92,7 @@ monad-law-1 : {l : Level} {A : Set l} {n : Nat} (d : Delta (Delta (Delta A (S n)
               ((delta-mu ∙ (delta-fmap delta-mu)) d) ≡ ((delta-mu ∙ delta-mu) d)
 monad-law-1 {n =       O} (mono d)                          = refl
 monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
-  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) 
+  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds)))
   ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-fmap-mu-to-tail n n ds) ⟩
   delta x (delta-mu (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
   ≡⟨ cong (\de -> delta x de) (monad-law-1 (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))) ⟩
@@ -100,58 +100,6 @@ monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
   ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-mu-is-nt tailDelta (delta-fmap tailDelta ds) ) ⟩
   delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds))))
   ∎
-
-
-{-
-  begin
-  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) ≡⟨ {!!} ⟩
-  delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds))))
-  ∎
--}
-{-
-monad-law-1 {n = S O} (delta (delta (delta _ _) _) (mono (delta (delta _ (mono _)) (mono (delta _ (mono _)))))) = refl
-monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
-  (delta-mu ∙ delta-fmap delta-mu) (delta (delta (delta x d) dd) ds) ≡⟨ refl ⟩
-  delta-mu (delta-fmap delta-mu (delta (delta (delta x d) dd) ds)) ≡⟨ refl ⟩
-  delta-mu (delta (delta-mu (delta (delta x d) dd)) (delta-fmap delta-mu ds)) ≡⟨ refl ⟩
-  delta-mu (delta (delta (headDelta (delta x d)) (delta-mu (delta-fmap tailDelta dd))) (delta-fmap delta-mu ds)) ≡⟨ refl ⟩
-  delta-mu (delta (delta x (delta-mu (delta-fmap tailDelta dd))) (delta-fmap delta-mu ds)) ≡⟨ refl ⟩
-  delta (headDelta (delta x (delta-mu (delta-fmap tailDelta dd)))) (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) ≡⟨ refl ⟩
-  delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds)))
-  ≡⟨ cong (\de -> delta x (delta-mu de)) (sym (functor-law-2 tailDelta delta-mu ds)) ⟩
-  delta x (delta-mu (delta-fmap (tailDelta {n = n} ∙ delta-mu {n = (S n)}) ds))
---  ≡⟨ cong (\ff -> delta x (delta-mu (delta-fmap ff ds))) hoge ⟩
-  ≡⟨ {!!} ⟩
-  delta x (delta-mu (delta-fmap (((delta-mu {n = n}) ∙ (delta-fmap tailDelta)) ∙ tailDelta) ds))
-  ≡⟨ cong (\de -> delta x (delta-mu de)) (functor-law-2 (delta-mu ∙ (delta-fmap tailDelta)) tailDelta ds ) ⟩
-  delta x (delta-mu (delta-fmap ((delta-mu {n = n}) ∙ (delta-fmap tailDelta)) (delta-fmap tailDelta ds)))
-  ≡⟨ cong (\de -> delta x (delta-mu de)) (functor-law-2 delta-mu (delta-fmap tailDelta) (delta-fmap tailDelta ds)) ⟩
-  delta x (delta-mu (delta-fmap (delta-mu {n = n}) (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
-  ≡⟨ cong (\de -> delta x de) (monad-law-1 (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds)))  ⟩
-  delta x (delta-mu (delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
-  ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-mu-is-nt tailDelta (delta-fmap tailDelta ds)) ⟩
-  delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds)))) ≡⟨ refl ⟩
-  delta (headDelta (delta x d)) (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds)))) ≡⟨ refl ⟩
-  delta-mu (delta (delta x d) (delta-mu (delta-fmap tailDelta ds))) ≡⟨ refl ⟩
-  delta-mu (delta (headDelta (delta (delta x d) dd)) (delta-mu (delta-fmap tailDelta ds))) ≡⟨ refl ⟩
-  delta-mu (delta-mu (delta (delta (delta x d) dd) ds)) ≡⟨ refl ⟩
-  (delta-mu ∙ delta-mu) (delta (delta (delta x d) dd) ds)
-  ∎
--}
-{-
-begin
-  (delta-mu ∙ delta-fmap delta-mu) (delta d ds) ≡⟨ refl ⟩
-  delta-mu (delta-fmap delta-mu (delta d ds)) ≡⟨ refl ⟩
-  delta-mu (delta (delta-mu d) (delta-fmap delta-mu ds)) ≡⟨ refl ⟩
-  delta (headDelta (delta-mu d)) (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds))) ≡⟨ {!!} ⟩
-  delta (headDelta (headDelta d)) (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds)))) ≡⟨ refl ⟩
-  delta-mu (delta (headDelta d) (delta-mu (delta-fmap tailDelta ds))) ≡⟨ refl ⟩
-  delta-mu (delta-mu (delta d ds)) ≡⟨ refl ⟩
-  (delta-mu ∙ delta-mu) (delta d ds)
-  ∎
--}
-
-
 
 
 delta-right-unity-law : {l : Level} {A : Set l} {n : Nat} (d : Delta A (S n)) -> (delta-mu ∙ delta-eta) d ≡ id d
