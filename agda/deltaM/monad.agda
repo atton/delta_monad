@@ -17,6 +17,45 @@ open NaturalTransformation
 open Monad
 
 
+-- sub proofs 
+
+fmap-headDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
+                                  {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+  (x : M A) ->  (fmap functorM ((headDeltaM {l} {A} {n} {M} {functorM} {monadM}) ∙ deltaM-eta) x) ≡ fmap functorM (eta monadM) x
+fmap-headDeltaM-with-deltaM-eta {l} {A} {O} {M} {fm} {mm}    x = refl
+fmap-headDeltaM-with-deltaM-eta {l} {A} {S n} {M} {fm} {mm} x  = refl
+
+
+fmap-tailDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
+                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+                   (d : DeltaM M {functorM} {monadM} A (S n)) ->
+       deltaM-fmap ((tailDeltaM {n = n} {monadM = monadM} )  ∙ deltaM-eta) d ≡ deltaM-fmap (deltaM-eta) d
+fmap-tailDeltaM-with-deltaM-eta {n = O} d = refl
+fmap-tailDeltaM-with-deltaM-eta {n = S n} d = refl
+
+
+-- main proofs
+
+deltaM-eta-is-nt : {l : Level} {A B : Set l} {n : Nat}
+                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} 
+                   (f : A -> B) -> (x : A) ->
+                   ((deltaM-eta {l} {B} {n} {M} {functorM} {monadM} )∙ f) x ≡ deltaM-fmap f (deltaM-eta x)
+deltaM-eta-is-nt {l} {A} {B} {O} {M} {fm} {mm} f x   = begin
+  deltaM-eta {n = O} (f x)              ≡⟨ refl ⟩
+  deltaM (mono (eta mm (f x)))          ≡⟨ cong (\de -> deltaM (mono de)) (eta-is-nt mm f x) ⟩
+  deltaM (mono (fmap fm f (eta mm x)))  ≡⟨ refl ⟩
+  deltaM-fmap f (deltaM-eta {n = O} x)  ∎
+deltaM-eta-is-nt {l} {A} {B} {S n} {M} {fm} {mm} f x = begin
+  deltaM-eta {n = S n} (f x) ≡⟨ refl ⟩
+  deltaM (delta-eta {n = S n} (eta mm (f x))) ≡⟨ refl ⟩
+  deltaM (delta (eta mm (f x)) (delta-eta (eta mm (f x))))
+  ≡⟨ cong (\de -> deltaM (delta de (delta-eta de))) (eta-is-nt mm f x) ⟩
+  deltaM (delta (fmap fm f (eta mm x)) (delta-eta (fmap fm f (eta mm x))))
+  ≡⟨ cong (\de ->  deltaM (delta (fmap fm f (eta mm x)) de)) (eta-is-nt delta-is-monad (fmap fm f) (eta mm x)) ⟩
+  deltaM (delta (fmap fm f (eta mm x)) (delta-fmap (fmap fm f) (delta-eta (eta mm x))))
+  ≡⟨ refl ⟩
+  deltaM-fmap f (deltaM-eta {n = S n} x)
+  ∎
 
 postulate  deltaM-right-unity-law : {l : Level} {A : Set l}
                          {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} {n : Nat}
@@ -67,26 +106,15 @@ deltaM-right-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
 -}
 
 
-fmap-headDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
-                                  {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
-  (x : M A) ->  (fmap functorM ((headDeltaM {l} {A} {n} {M} {functorM} {monadM}) ∙ deltaM-eta) x) ≡ fmap functorM (eta monadM) x
-fmap-headDeltaM-with-deltaM-eta {l} {A} {O} {M} {fm} {mm}    x = refl
-fmap-headDeltaM-with-deltaM-eta {l} {A} {S n} {M} {fm} {mm} x  = refl
-
-fmap-tailDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
-                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
-                   (d : DeltaM M {functorM} {monadM} A (S n)) ->
-       deltaM-fmap ((tailDeltaM {n = n} {monadM = monadM} )  ∙ deltaM-eta) d ≡ deltaM-fmap (deltaM-eta) d
-fmap-tailDeltaM-with-deltaM-eta {n = O} d = refl
-fmap-tailDeltaM-with-deltaM-eta {n = S n} d = refl
 
 
 
-deltaM-left-unity-law : {l : Level} {A : Set l}
+postulate deltaM-left-unity-law : {l : Level} {A : Set l}
                         {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
                         {n : Nat}
                         (d : DeltaM M {functorM} {monadM} A (S n)) ->
                               (deltaM-mu ∙ (deltaM-fmap deltaM-eta)) d ≡ id d
+{-
 deltaM-left-unity-law {l} {A} {M} {fm} {mm} {O} (deltaM (mono x))      = begin
   deltaM-mu (deltaM-fmap deltaM-eta (deltaM (mono x)))
   ≡⟨ refl ⟩
@@ -137,6 +165,8 @@ deltaM-left-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
   deltaM (delta x d)
   ∎
 
+-}
+
 
 
 deltaM-is-monad : {l : Level} {A : Set l} {n : Nat}
@@ -152,7 +182,7 @@ deltaM-is-monad functorM monadM = record
                                       association-law = {!!};
                                       left-unity-law  = deltaM-left-unity-law;
                                       right-unity-law = (\x -> (sym (deltaM-right-unity-law x))) ;
-                                      eta-is-nt = {!!}
+                                      eta-is-nt = deltaM-eta-is-nt
                                      }
 
 
