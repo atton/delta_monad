@@ -23,21 +23,10 @@ functor-law-2 : {l : Level} {n : Nat} {A B C : Set l} ->
 functor-law-2 f g (mono x)    = refl
 functor-law-2 f g (delta x d) = cong (delta (f (g x))) (functor-law-2 f g d)
 
-delta-fmap-equiv : {l : Level} {A B : Set l} {n : Nat} 
-                   {f g : A -> B} ->  (eq : (x : A) -> f x ≡ g x) (d : Delta A (S n)) ->
-                 delta-fmap f d ≡ delta-fmap g d
-delta-fmap-equiv {f = f} {g = g} eq (mono x) = begin
-  mono (f x) ≡⟨ cong (\he -> (mono he)) (eq x) ⟩
-  mono (g x) ∎
-delta-fmap-equiv {f = f} {g = g} eq (delta x d) = begin
-  delta (f x) (delta-fmap f d) ≡⟨ cong (\hx -> (delta hx (delta-fmap f d))) (eq x) ⟩
-  delta (g x) (delta-fmap f d) ≡⟨ cong (\fx -> (delta (g x) fx)) (delta-fmap-equiv {f = f} {g = g} eq d) ⟩
-  delta (g x) (delta-fmap g d)   ∎
-
 
 
 delta-is-functor : {l : Level} {n : Nat} -> Functor {l} (\A -> Delta A (S n))
 delta-is-functor = record {  fmap = delta-fmap ;
                              preserve-id = functor-law-1;
-                             covariant  = \f g -> functor-law-2 g f;
-                             fmap-equiv = delta-fmap-equiv }
+                             covariant  = \f g -> functor-law-2 g f
+                             }

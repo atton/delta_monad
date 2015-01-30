@@ -11,8 +11,6 @@ record Functor {l : Level} (F : Set l -> Set l) : Set (suc l) where
     preserve-id : {A : Set l} (x : F A) → fmap id x ≡ id x
     covariant   : {A B C : Set l} (f : A -> B) -> (g : B -> C) -> (x : F A)
                     -> fmap (g ∙ f) x ≡ ((fmap g) ∙ (fmap f)) x
-  field 
-    fmap-equiv : {A B : Set l} {f g : A -> B} -> ((x : A) -> f x ≡ g x) -> (x : F A) -> fmap f x ≡ fmap g x
 open Functor
 
 record NaturalTransformation {l : Level} (F G : {l' : Level} -> Set l' -> Set l')
