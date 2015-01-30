@@ -18,13 +18,10 @@ open Monad
 
 
 
-deltaM-right-unity-law : {l : Level} {A : Set l} 
-                         {M : {l' : Level} -> Set l' -> Set l'}
-                         {functorM : {l' : Level} -> Functor {l'} M}
-                         {monadM   : {l' : Level} -> Monad {l'} M functorM}
-                         {n : Nat}
-                           (d : DeltaM M {functorM} {monadM} A (S n)) ->
-                              (deltaM-mu ∙ deltaM-eta) d ≡ id d
+postulate  deltaM-right-unity-law : {l : Level} {A : Set l}
+                         {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} {n : Nat}
+                         (d : DeltaM M {functorM} {monadM} A (S n)) -> (deltaM-mu ∙ deltaM-eta) d ≡ id d
+{-
 deltaM-right-unity-law {l} {A} {M} {fm} {mm} {O} (deltaM (mono x)) = begin
   deltaM-mu (deltaM-eta (deltaM (mono x)))             ≡⟨ refl ⟩
   deltaM-mu (deltaM (mono (eta mm (deltaM (mono x))))) ≡⟨ refl ⟩
@@ -39,7 +36,7 @@ deltaM-right-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
   ≡⟨ refl ⟩
   deltaM-mu (deltaM (delta (eta mm (deltaM (delta x d))) (delta-eta (eta mm (deltaM (delta x d))))))
   ≡⟨ refl ⟩
-  appendDeltaM (deltaM (mono (mu mm (fmap fm (headDeltaM {monadM = mm}) (eta mm (deltaM (delta x d))))))) 
+  appendDeltaM (deltaM (mono (mu mm (fmap fm (headDeltaM {monadM = mm}) (eta mm (deltaM (delta x d)))))))
                (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d)))))))
   ≡⟨ cong (\de -> appendDeltaM (deltaM (mono (mu mm de)))
                                 (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d))))))))
@@ -49,7 +46,7 @@ deltaM-right-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
   ≡⟨ refl ⟩
   appendDeltaM (deltaM (mono (mu mm (eta mm x))))
                (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d)))))))
-  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono de)) (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d)))))))) 
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono de)) (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d))))))))
            (sym (right-unity-law mm x)) ⟩
   appendDeltaM (deltaM (mono x)) (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta mm (deltaM (delta x d)))))))
   ≡⟨ refl ⟩
@@ -67,41 +64,95 @@ deltaM-right-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
   ≡⟨ refl ⟩
   deltaM (delta x d)
   ∎
-
-
-{-
-deltaM-left-unity-law : {l : Level} {A : Set l} 
-                        {M : {l' : Level} -> Set l' -> Set l'}
-                        (functorM : {l' : Level} -> Functor {l'} M)
-                        (monadM   : {l' : Level} -> Monad {l'} M functorM)
-                        (d : DeltaM M {functorM} {monadM} A (S O)) -> 
-                              (deltaM-mu ∙ (deltaM-fmap deltaM-eta)) d ≡ id d
-deltaM-left-unity-law functorM monadM (deltaM (mono x)) = begin
-   (deltaM-mu ∙ deltaM-fmap deltaM-eta) (deltaM (mono x)) ≡⟨ refl ⟩
-   deltaM-mu (deltaM-fmap deltaM-eta (deltaM (mono x)))   ≡⟨ refl ⟩
-   deltaM-mu (deltaM (mono (fmap functorM deltaM-eta x))) ≡⟨ refl ⟩
-   deltaM (mono (mu monadM (fmap functorM headDeltaM (fmap functorM deltaM-eta x)))) ≡⟨ {!!} ⟩
-   deltaM (mono (mu monadM (fmap functorM headDeltaM (fmap functorM deltaM-eta x)))) ≡⟨ {!!} ⟩
-
-   id (deltaM (mono x))
-   ∎
-deltaM-left-unity-law functorM monadM (deltaM (delta x ()))
 -}
 
+
+fmap-headDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
+                                  {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+  (x : M A) ->  (fmap functorM ((headDeltaM {l} {A} {n} {M} {functorM} {monadM}) ∙ deltaM-eta) x) ≡ fmap functorM (eta monadM) x
+fmap-headDeltaM-with-deltaM-eta {l} {A} {O} {M} {fm} {mm}    x = refl
+fmap-headDeltaM-with-deltaM-eta {l} {A} {S n} {M} {fm} {mm} x  = refl
+
+fmap-tailDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
+                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+                   (d : DeltaM M {functorM} {monadM} A (S n)) ->
+       deltaM-fmap ((tailDeltaM {n = n} {monadM = monadM} )  ∙ deltaM-eta) d ≡ deltaM-fmap (deltaM-eta) d
+fmap-tailDeltaM-with-deltaM-eta {n = O} d = refl
+fmap-tailDeltaM-with-deltaM-eta {n = S n} d = refl
+
+
+
+deltaM-left-unity-law : {l : Level} {A : Set l}
+                        {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+                        {n : Nat}
+                        (d : DeltaM M {functorM} {monadM} A (S n)) ->
+                              (deltaM-mu ∙ (deltaM-fmap deltaM-eta)) d ≡ id d
+deltaM-left-unity-law {l} {A} {M} {fm} {mm} {O} (deltaM (mono x))      = begin
+  deltaM-mu (deltaM-fmap deltaM-eta (deltaM (mono x)))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta-fmap (fmap fm deltaM-eta) (mono x)))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (mono (fmap fm deltaM-eta x)))
+  ≡⟨ refl ⟩
+  deltaM (mono (mu mm (fmap fm (headDeltaM {l} {A} {O} {M}) (fmap fm deltaM-eta x))))
+  ≡⟨ cong (\de -> deltaM (mono (mu mm de))) (sym (covariant fm deltaM-eta headDeltaM x)) ⟩
+  deltaM (mono (mu mm (fmap fm ((headDeltaM {l} {A} {O} {M} {fm} {mm}) ∙ deltaM-eta) x)))
+  ≡⟨ cong (\de -> deltaM (mono (mu mm de))) (fmap-headDeltaM-with-deltaM-eta {l} {A} {O} {M} {fm} {mm} x) ⟩
+  deltaM (mono (mu mm (fmap fm (eta mm) x)))
+  ≡⟨ cong (\de -> deltaM (mono de)) (left-unity-law mm x) ⟩
+  deltaM (mono x)
+  ∎
+deltaM-left-unity-law {l} {A} {M} {fm} {mm} {S n} (deltaM (delta x d)) = begin
+  deltaM-mu (deltaM-fmap deltaM-eta (deltaM (delta x d)))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta-fmap (fmap fm deltaM-eta) (delta x d)))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta (fmap fm deltaM-eta x) (delta-fmap (fmap fm deltaM-eta) d)))
+  ≡⟨ refl  ⟩
+  appendDeltaM (deltaM (mono (mu mm (fmap fm (headDeltaM {l} {A} {S n} {M} {fm} {mm}) (fmap fm deltaM-eta x)))))
+               (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d))))
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono (mu mm de)))
+                                (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d)))))
+           (sym (covariant fm deltaM-eta headDeltaM x)) ⟩
+  appendDeltaM (deltaM (mono (mu mm (fmap fm ((headDeltaM {l} {A} {S n} {M} {fm} {mm}) ∙ deltaM-eta) x))))
+               (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d))))
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono (mu mm de)))
+                                (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d)))))
+           (fmap-headDeltaM-with-deltaM-eta {l} {A} {S n} {M} {fm} {mm} x) ⟩
+  appendDeltaM (deltaM (mono (mu mm (fmap fm (eta mm) x))))
+               (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d))))
+
+  ≡⟨ cong (\de -> (appendDeltaM (deltaM (mono de)) (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d))))))
+           (left-unity-law mm x) ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-eta) d))))
+  ≡⟨ refl ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM-mu (deltaM-fmap (tailDeltaM {n = n})(deltaM-fmap deltaM-eta (deltaM d))))
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono x)) (deltaM-mu de)) (sym (covariant deltaM-is-functor deltaM-eta tailDeltaM (deltaM d))) ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM-mu (deltaM-fmap ((tailDeltaM {n = n}) ∙ deltaM-eta) (deltaM d)))
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono x)) (deltaM-mu de)) (fmap-tailDeltaM-with-deltaM-eta (deltaM d)) ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM-mu (deltaM-fmap deltaM-eta (deltaM d)))
+  ≡⟨ cong (\de -> appendDeltaM (deltaM (mono x)) de) (deltaM-left-unity-law (deltaM d)) ⟩
+  appendDeltaM (deltaM (mono x)) (deltaM d)
+  ≡⟨ refl ⟩
+  deltaM (delta x d)
+  ∎
+
+
+
 deltaM-is-monad : {l : Level} {A : Set l} {n : Nat}
-                              {M : {l' : Level} -> Set l' -> Set l'}
-                              (functorM : {l' : Level}  -> Functor {l'} M)
-                              (monadM   : {l' : Level}-> Monad {l'}  M functorM) ->
-               Monad {l} (\A -> DeltaM M {functorM} {monadM} A (S n)) deltaM-is-functor
+                              {M : Set l -> Set l}
+                              (functorM : Functor M)
+                              (monadM   : Monad M functorM) ->
+               Monad {l} (\A -> DeltaM M {functorM} {monadM} A (S n)) (deltaM-is-functor {l} {n})
 deltaM-is-monad functorM monadM = record
                                     { mu     = deltaM-mu;
                                       eta    = deltaM-eta;
                                       return = deltaM-eta;
                                       bind   = deltaM-bind;
                                       association-law = {!!};
-                                      left-unity-law = {!!};
+                                      left-unity-law  = deltaM-left-unity-law;
                                       right-unity-law = (\x -> (sym (deltaM-right-unity-law x))) ;
-                                      eta-is-nt = {!!} 
+                                      eta-is-nt = {!!}
                                      }
 
 

@@ -14,9 +14,9 @@ module deltaM.functor where
 
 
 deltaM-preserve-id :  {l : Level} {A : Set l} {n : Nat}
-                      {M : {l' : Level} -> Set l' -> Set l'}
-                      (functorM : {l' : Level} -> Functor {l'} M)
-                      {monadM   : {l' : Level} -> Monad {l'} M functorM}
+                      {M : Set l -> Set l}
+                      (functorM : Functor  M)
+                      {monadM   : Monad  M functorM}
                       -> (d : DeltaM M {functorM} {monadM} A (S n)) -> deltaM-fmap id d ≡ id d
 deltaM-preserve-id functorM (deltaM (mono x))  = begin
   deltaM-fmap id (deltaM (mono x))                           ≡⟨ refl ⟩
@@ -44,9 +44,9 @@ deltaM-preserve-id functorM (deltaM (delta x d)) = begin
 
 
 deltaM-covariant : {l : Level} {A B C : Set l} {n : Nat} ->
-                   {M : {l' : Level} -> Set l' -> Set l'}
-                   (functorM : {l' : Level} -> Functor {l'} M)
-                   {monadM   : {l' : Level} -> Monad {l'}  M functorM}
+                   {M : Set l -> Set l}
+                   (functorM : Functor M)
+                   {monadM   : Monad M functorM}
                    (f : B -> C) -> (g : A -> B) -> (d : DeltaM M {functorM} {monadM} A (S n)) ->
                    (deltaM-fmap (f ∙ g)) d ≡ ((deltaM-fmap f) ∙ (deltaM-fmap g)) d
 deltaM-covariant functorM f g (deltaM (mono x))    = begin
@@ -79,12 +79,29 @@ deltaM-covariant functorM f g (deltaM (delta x d)) = begin
   (deltaM-fmap f ∙ deltaM-fmap g) (deltaM (delta x d))
   ∎
 
+postulate deltaM-fmap-equiv : {l : Level} {A B : Set l} {n : Nat}
+                                {M : Set l -> Set l}
+                                {functorM : Functor M}
+                                {monadM   : Monad M functorM}
+                                {f g : A -> B}
+                                (eq : (x : A) -> f x ≡ g x)
+                                (d : DeltaM M {functorM} {monadM} A (S n)) ->
+                                deltaM-fmap f d ≡ deltaM-fmap g d
+{-
+deltaM-fmap-equiv {n = O} f g eq (deltaM (mono x)) = begin
+  {!!} ≡⟨ {!!} ⟩
+  {!!}
+  ∎
+deltaM-fmap-equiv {n = S n} f g eq d = {!!}
+-}
 
 deltaM-is-functor : {l : Level} {n : Nat}
-                                {M : {l' : Level} -> Set l' -> Set l'}
-                                {functorM : {l' : Level} -> Functor {l'} M }
-                                {monadM   : {l' : Level} -> Monad {l'} M functorM}
+                                {M : Set l -> Set l}
+                                {functorM : Functor M }
+                                {monadM   : Monad M functorM}
                     -> Functor {l} (\A -> DeltaM M {functorM} {monadM} A (S n))
 deltaM-is-functor {_} {_} {_} {functorM} = record { fmap         = deltaM-fmap ;
                                                     preserve-id  = deltaM-preserve-id functorM ;
-                                                    covariant    = (\f g -> deltaM-covariant functorM g f)}
+                                                    covariant    = (\f g -> deltaM-covariant functorM g f);
+                                                    fmap-equiv   = deltaM-fmap-equiv
+                                                    }

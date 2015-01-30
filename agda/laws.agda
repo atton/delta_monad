@@ -4,14 +4,15 @@ open import basic
 
 module laws where
 
-record Functor {l : Level} (F : {l' : Level} -> Set l' -> Set l') : Set (suc l) where
+record Functor {l : Level} (F : Set l -> Set l) : Set (suc l) where
   field
     fmap : {A B : Set l} -> (A -> B) -> (F A) -> (F B)
   field
     preserve-id : {A : Set l} (x : F A) → fmap id x ≡ id x
     covariant   : {A B C : Set l} (f : A -> B) -> (g : B -> C) -> (x : F A)
                     -> fmap (g ∙ f) x ≡ ((fmap g) ∙ (fmap f)) x
-
+  field 
+    fmap-equiv : {A B : Set l} {f g : A -> B} -> ((x : A) -> f x ≡ g x) -> (x : F A) -> fmap f x ≡ fmap g x
 open Functor
 
 record NaturalTransformation {l : Level} (F G : {l' : Level} -> Set l' -> Set l')
@@ -29,8 +30,8 @@ open NaturalTransformation
 
 
 -- simple Monad definition. without NaturalTransformation (mu, eta) and monad-law with f.
-record Monad {l : Level} (M : {ll : Level} -> Set ll -> Set ll)
-                         (functorM : Functor {l} M)
+record Monad {l : Level} (M : Set l -> Set l)
+                         (functorM : Functor M)
                          : Set (suc l)  where
   field -- category
     mu  :  {A : Set l} -> M (M A) -> M A
