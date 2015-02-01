@@ -69,9 +69,9 @@ deltaM-mu : {l : Level} {A : Set l} {n : Nat}
                         {M : Set l -> Set l} {functorM : Functor  M} {monadM   : Monad  M functorM} ->
                         DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A (S n)) (S n)  ->
                         DeltaM M {functorM} {monadM} A (S n)
-deltaM-mu {n = O}   {functorM = fm} {monadM = mm} (deltaM (mono x))    = deltaM (mono (mu mm (fmap fm headDeltaM x)))
-deltaM-mu {n = S n} {functorM = fm} {monadM = mm} (deltaM (delta x d)) = appendDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM x))))
-                                                                                      (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d)))
+deltaM-mu {n = O}   {functorM = fm} {monadM = mm} d = deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d))))
+deltaM-mu {n = S n} {functorM = fm} {monadM = mm} d = appendDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d)))))
+                                                                   (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d)))
                                                   
 
 deltaM-bind : {l : Level} {A B : Set l} 
