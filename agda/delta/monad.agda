@@ -147,6 +147,7 @@ delta-is-monad = record { eta    = delta-eta;
                           return = delta-eta;
                           bind   = delta-bind;
                           eta-is-nt = delta-eta-is-nt;
+                          mu-is-nt = delta-mu-is-nt;
                           association-law = monad-law-1;
                           left-unity-law  = delta-left-unity-law ;
                           right-unity-law = \x -> (sym (delta-right-unity-law x)) }

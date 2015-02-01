@@ -41,6 +41,10 @@ appendDeltaM : {l : Level} {A : Set l} {n m : Nat}
 appendDeltaM (deltaM d) (deltaM dd) = deltaM (deltaAppend d dd)
 
 
+dmap : {l : Level} {A B : Set l} {n : Nat}
+       {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} ->
+       (M A -> B) -> DeltaM M {functorM} {monadM} A (S n) -> Delta B (S n)
+dmap f (deltaM d) = delta-fmap f d
 
 
 -- functor definitions
