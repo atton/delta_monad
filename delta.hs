@@ -95,6 +95,9 @@ data DeltaM m a = DeltaM (Delta (m a)) deriving (Show)
 
 -- DeltaM utils
 
+unDeltaM :: DeltaM m a -> Delta (m a)
+unDeltaM (DeltaM d) = d
+
 headDeltaM :: DeltaM m a -> m a
 headDeltaM (DeltaM d) = headDelta d
 
@@ -125,9 +128,9 @@ instance (Applicative m) => Applicative (DeltaM m) where
 
 
 mu' :: (Functor m, Monad m) => DeltaM m (DeltaM m a) -> DeltaM m a
-mu' (DeltaM (Mono x))    = DeltaM $ Mono $ (>>= id) $ fmap headDeltaM x
-mu' (DeltaM (Delta x d)) = appendDeltaM (mu' $ DeltaM $ Mono x)
-                                        (mu' $ fmap tailDeltaM $ DeltaM d )
+mu' d@(DeltaM (Mono _))    = DeltaM $ Mono $ (>>= id) $ fmap headDeltaM $ headDeltaM d
+mu' d@(DeltaM (Delta _ _)) = DeltaM $ Delta ((>>= id) $ fmap headDeltaM $ headDeltaM d)
+                                            (unDeltaM (mu' (fmap tailDeltaM (tailDeltaM d))))
 
 instance (Functor m, Monad m) => Monad (DeltaM m) where
     return x = DeltaM $ Mono $ return x
