@@ -10,53 +10,53 @@ module deltaM where
 
 -- DeltaM definitions
 
-data DeltaM {l : Level}
-            (M : Set l -> Set l)
-            {functorM : Functor M}
-            {monadM : Monad M functorM}
-            (A : Set l)
-            : (Nat -> Set l) where
-   deltaM : {n : Nat} -> Delta (M A) (S n) -> DeltaM M {functorM} {monadM} A (S n)
+data DeltaM {l : Level} {T : Set l -> Set l} {F : Functor T}
+            (M : Monad T F) (A : Set l) : (Nat -> Set l) where
+   deltaM : {n : Nat} -> Delta (T A) (S n) -> DeltaM M A (S n)
 
 
 -- DeltaM utils
 
 unDeltaM : {l : Level} {A : Set l} {n : Nat}
-           {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} ->
-           (DeltaM M {functorM} {monadM} A (S n)) -> Delta (M A) (S n)
+           {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+           (DeltaM M A (S n)) -> Delta (T A) (S n)
 unDeltaM (deltaM d) = d
 
+
+
 headDeltaM : {l : Level} {A : Set l} {n : Nat}
-             {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
-             -> DeltaM M {functorM} {monadM} A (S n) -> M A
+             {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+             DeltaM M A (S n) -> T A
 headDeltaM (deltaM d) = headDelta d
 
 
+
 tailDeltaM :  {l : Level} {A : Set l} {n : Nat}
-              {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
-             -> DeltaM {l} M {functorM} {monadM} A (S (S n)) -> DeltaM M {functorM} {monadM} A (S n)
+              {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+              DeltaM M A (S (S n)) -> DeltaM M A (S n)
 tailDeltaM {_} {n} (deltaM d) = deltaM (tailDelta d)
 
 
+
 appendDeltaM : {l : Level} {A : Set l} {n m : Nat}
-             {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} ->
-             DeltaM M {functorM} {monadM} A (S n) -> 
-             DeltaM M {functorM} {monadM} A (S m) -> 
-             DeltaM M {functorM} {monadM} A ((S n) + (S m))
+               {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+               DeltaM M A (S n) -> DeltaM M A (S m) -> DeltaM M A ((S n) + (S m))
 appendDeltaM (deltaM d) (deltaM dd) = deltaM (deltaAppend d dd)
 
 
 dmap : {l : Level} {A B : Set l} {n : Nat}
-       {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} ->
-       (M A -> B) -> DeltaM M {functorM} {monadM} A (S n) -> Delta B (S n)
+       {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+       (T A -> B) -> DeltaM M A (S n) -> Delta B (S n)
 dmap f (deltaM d) = delta-fmap f d
+
+
 
 
 -- functor definitions
 open Functor
 deltaM-fmap : {l : Level} {A B : Set l} {n : Nat}
-              {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
-              -> (A -> B) -> DeltaM M {functorM} {monadM} A (S n) -> DeltaM M {functorM} {monadM} B (S n)
+              {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+              (A -> B) -> DeltaM M A (S n) -> DeltaM M B (S n)
 deltaM-fmap {l} {A} {B} {n} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-functor (fmap functorM f) d)
 
 
@@ -66,29 +66,15 @@ deltaM-fmap {l} {A} {B} {n} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-
 open Monad
 
 deltaM-eta : {l : Level} {A : Set l} {n : Nat}
-                         {M : Set l -> Set l} {functorM : Functor M} {monadM   : Monad M functorM} ->
-            A -> (DeltaM M {functorM} {monadM} A (S n))
-deltaM-eta {n = n} {monadM = mm} x = deltaM (delta-eta {n = n} (eta mm x))
-
-deltaM-mu : {l : Level} {A : Set l} {n : Nat} 
-                        {M : Set l -> Set l} {functorM : Functor  M} {monadM   : Monad  M functorM} ->
-                        DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} A (S n)) (S n)  ->
-                        DeltaM M {functorM} {monadM} A (S n)
-deltaM-mu {n = O}   {functorM = fm} {monadM = mm} d = deltaM (mono  (mu mm (fmap fm headDeltaM (headDeltaM d))))
-deltaM-mu {n = S n} {functorM = fm} {monadM = mm} d = deltaM (delta (mu mm (fmap fm headDeltaM (headDeltaM d)))
-                                                                    (unDeltaM (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d)))))
-                                                  
-
-deltaM-bind : {l : Level} {A B : Set l} 
-                          {n : Nat} 
-                          {M : Set l -> Set l}
-                          {functorM : Functor M}
-                          {monadM   : Monad M functorM} ->
-            (DeltaM M {functorM} {monadM} A (S n)) -> 
-            (A -> DeltaM M {functorM} {monadM} B (S n)) 
-            -> DeltaM M {functorM} {monadM} B (S n)
-deltaM-bind {n = O}   {monadM = mm} (deltaM (mono x))    f = deltaM (mono (bind mm x (headDeltaM ∙ f)))
-deltaM-bind {n = S n} {monadM = mm} (deltaM (delta x d)) f = appendDeltaM (deltaM (mono (bind mm x (headDeltaM ∙ f))))
-                                                                               (deltaM-bind (deltaM d) (tailDeltaM ∙ f))
+             {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+             A -> (DeltaM M A (S n))
+deltaM-eta {n = n} {M = M} x = deltaM (delta-eta {n = n} (eta M x))
 
 
+
+deltaM-mu : {l : Level} {A : Set l} {n : Nat}
+            {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
+            DeltaM M (DeltaM M A (S n)) (S n) -> DeltaM M A (S n)
+deltaM-mu {n = O}   {F = F} {M = M} d = deltaM (mono  (mu M (fmap F headDeltaM (headDeltaM d))))
+deltaM-mu {n = S n} {F = F} {M = M} d = deltaM (delta (mu M (fmap F headDeltaM (headDeltaM d)))
+                                                      (unDeltaM (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d)))))
