@@ -17,20 +17,12 @@ open NaturalTransformation
 open Monad
 
 
--- proof utils
-deconstruct : {l : Level} {A : Set l} {n : Nat}
-                          {M : Set l -> Set l} {fm : Functor M} {mm : Monad M fm}
-                          (d : DeltaM M {fm} {mm} A (S n)) -> Delta (M A) (S n)
-deconstruct (deltaM d) = d
-
-
-
 -- sub proofs 
 
 deconstruct-id : {l : Level} {A : Set l} {n : Nat}
                           {M : Set l -> Set l} {fm : Functor M} {mm : Monad M fm}
-                          (d : DeltaM M {fm} {mm} A (S n)) -> deltaM (deconstruct d) ≡ d
-deconstruct-id {n = O} (deltaM x) = refl
+                          (d : DeltaM M {fm} {mm} A (S n)) -> deltaM (unDeltaM d) ≡ d
+deconstruct-id {n = O} (deltaM x)   = refl
 deconstruct-id {n = S n} (deltaM x) = refl
 
 
@@ -57,26 +49,22 @@ fmap-tailDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
 fmap-tailDeltaM-with-deltaM-eta {n = O} d = refl
 fmap-tailDeltaM-with-deltaM-eta {n = S n} d = refl
 
-
 fmap-headDeltaM-with-deltaM-mu : {l : Level} {A : Set l} {n : Nat}
-                                 {M : Set l -> Set l} {fm : Functor M} {mm : Monad M fm}
-                                 (x : M (DeltaM M {fm} {mm} (DeltaM M A (S n)) (S n))) -> 
-                                 fmap fm (headDeltaM ∙ deltaM-mu) x ≡ fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x
-fmap-headDeltaM-with-deltaM-mu {l} {A} {O} {M} {fm} {mm}  x = refl
-fmap-headDeltaM-with-deltaM-mu {l} {A} {S n} {M} {fm} {mm}  x = begin
-  fmap fm (headDeltaM ∙ deltaM-mu) x   ≡⟨ refl ⟩
-  fmap fm (headDeltaM ∙ (\d -> appendDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d)))))
-                                            (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d))))) x ≡⟨ refl  ⟩
-  fmap fm (\d -> headDeltaM (appendDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d)))))
-                                          (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d))))) x
-  ≡⟨ refl ⟩
-  fmap fm (\d -> headDeltaM (appendDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d)))))
-                                          (deltaM (deconstruct {A = A} {mm = mm} (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM d))))))) x
-  ≡⟨ {!!} ⟩
-  fmap fm (\d -> headDeltaM (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM d)))))) x ≡⟨ refl ⟩
-  fmap fm (\d -> (mu mm (fmap fm headDeltaM (headDeltaM d)))) x ≡⟨ {!!} ⟩
-  fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x
-  ∎
+                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+                   (x : M (DeltaM M (DeltaM M {functorM} {monadM} A (S n)) (S n))) ->
+                   fmap functorM (headDeltaM ∙ deltaM-mu) x ≡ fmap functorM (((mu monadM) ∙ (fmap functorM headDeltaM)) ∙ headDeltaM) x
+fmap-headDeltaM-with-deltaM-mu {n = O}   x = refl
+fmap-headDeltaM-with-deltaM-mu {n = S n} x = refl
+
+
+fmap-tailDeltaM-with-deltaM-mu : {l : Level} {A : Set l} {n : Nat}
+                   {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM}
+                   (d : DeltaM M {functorM} {monadM} (DeltaM M {functorM} {monadM} (DeltaM M A (S (S n))) (S (S n))) (S n)) ->
+                   deltaM-fmap (tailDeltaM ∙ deltaM-mu) d ≡ deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) d
+fmap-tailDeltaM-with-deltaM-mu {n = O} (deltaM (mono x)) = refl
+fmap-tailDeltaM-with-deltaM-mu {n = S n} (deltaM d)      = refl
+
+
 
 
 
@@ -104,6 +92,12 @@ deltaM-eta-is-nt {l} {A} {B} {S n} {M} {fm} {mm} f x = begin
   deltaM-fmap f (deltaM-eta {n = S n} x)
   ∎
 -}
+
+postulate deltaM-mu-is-nt : {l : Level} {A B : Set l} {n : Nat}
+                  {T : Set l -> Set l} {F : Functor T} {M : Monad T F}
+                  (f : A -> B) ->
+                  (d : DeltaM T {F} {M} (DeltaM T A (S n)) (S n)) ->
+                  deltaM-fmap f (deltaM-mu d) ≡ deltaM-mu (deltaM-fmap (deltaM-fmap f) d)
 
 postulate  deltaM-right-unity-law : {l : Level} {A : Set l}
                          {M : Set l -> Set l} {functorM : Functor M} {monadM : Monad M functorM} {n : Nat}
@@ -265,7 +259,112 @@ begin
   deltaM-mu (deltaM (mono (mu mm (fmap fm headDeltaM (headDeltaM  {A = DeltaM M (DeltaM M A (S O)) (S O)} {monadM = mm} (deltaM (mono x)))))))  ≡⟨ refl ⟩
   deltaM-mu (deltaM-mu (deltaM (mono x)))  ∎
 -}
-deltaM-association-law {l} {A} {S n} M fm mm (deltaM (delta x d)) = {!!}
+deltaM-association-law {l} {A} {S n} M fm mm (deltaM (delta x d)) = begin
+  deltaM-mu (deltaM-fmap deltaM-mu (deltaM (delta x d)))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta (fmap fm deltaM-mu x) (delta-fmap (fmap fm deltaM-mu) d)))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm (headDeltaM {A = A} {monadM = mm}) (headDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM (delta (fmap fm deltaM-mu x) (delta-fmap (fmap fm deltaM-mu) d))))))
+                (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM (deltaM (delta (fmap fm deltaM-mu x) (delta-fmap (fmap fm deltaM-mu) d))))))))
+
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm (headDeltaM {A = A} {monadM = mm}) (fmap fm deltaM-mu x)))
+                (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-mu) d))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm de) (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-mu) d)))))))
+           (sym (covariant fm deltaM-mu headDeltaM x)) ⟩
+  deltaM (delta (mu mm (fmap fm ((headDeltaM {A = A} {monadM = mm}) ∙  deltaM-mu) x))
+                (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-mu) d))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm de)
+                          (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-mu) d)))))))
+           (fmap-headDeltaM-with-deltaM-mu {A = A} {monadM = mm} x) ⟩
+  deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                (unDeltaM {A = A} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap fm deltaM-mu) d))))))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM-fmap deltaM-mu (deltaM d))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                                 (unDeltaM {monadM = mm} (deltaM-mu de))))
+           (sym (deltaM-covariant fm tailDeltaM deltaM-mu (deltaM d))) ⟩
+  deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap (tailDeltaM ∙ deltaM-mu) (deltaM d)))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                                 (unDeltaM {monadM = mm} (deltaM-mu de))))
+           (fmap-tailDeltaM-with-deltaM-mu (deltaM d))  ⟩
+  deltaM (delta (mu mm (fmap fm (((mu mm) ∙ (fmap fm headDeltaM)) ∙ headDeltaM) x))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm de)
+                          (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d))))))
+          (covariant fm headDeltaM ((mu mm) ∙ (fmap fm headDeltaM)) x) ⟩
+  deltaM (delta (mu mm (((fmap fm ((mu mm) ∙ (fmap fm headDeltaM))) ∙ (fmap fm headDeltaM)) x))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (((fmap fm ((mu mm) ∙ (fmap fm headDeltaM))) (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm de) 
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d))))))
+           (covariant fm (fmap fm headDeltaM)  (mu mm) (fmap fm headDeltaM x)) ⟩
+
+  deltaM (delta (mu mm ((((fmap fm (mu mm)) ∙ (fmap fm (fmap fm headDeltaM))) (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm (mu mm) (fmap fm (fmap fm headDeltaM) (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ cong (\de -> deltaM (delta de (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d))))))
+           (association-law mm (fmap fm (fmap fm headDeltaM) (fmap fm headDeltaM x))) ⟩
+  deltaM (delta (mu mm (mu mm (fmap fm (fmap fm headDeltaM) (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm de) (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d))))))
+           (mu-is-nt mm headDeltaM (fmap fm headDeltaM x)) ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap ((deltaM-mu ∙ (deltaM-fmap tailDeltaM)) ∙ tailDeltaM) (deltaM d)))))
+  ≡⟨ cong (\de ->   deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x)))) (unDeltaM {monadM = mm} (deltaM-mu de))))
+           (deltaM-covariant fm (deltaM-mu ∙ (deltaM-fmap tailDeltaM)) tailDeltaM (deltaM d)) ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (((deltaM-fmap (deltaM-mu ∙ (deltaM-fmap tailDeltaM))  ∙ (deltaM-fmap tailDeltaM)) (deltaM d))))))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (((deltaM-fmap (deltaM-mu ∙ (deltaM-fmap tailDeltaM)) (deltaM-fmap tailDeltaM (deltaM d))))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x)))) (unDeltaM {monadM = mm} (deltaM-mu de))))
+           (deltaM-covariant fm deltaM-mu (deltaM-fmap tailDeltaM) (deltaM-fmap tailDeltaM (deltaM d)))  ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (((deltaM-fmap deltaM-mu) ∙ (deltaM-fmap (deltaM-fmap tailDeltaM))) (deltaM-fmap tailDeltaM (deltaM d))))))
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap deltaM-mu (deltaM-fmap (deltaM-fmap tailDeltaM) (deltaM-fmap tailDeltaM (deltaM d)))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x)))) (unDeltaM {monadM = mm} de)))
+           (deltaM-association-law M fm mm (deltaM-fmap (deltaM-fmap tailDeltaM) (deltaM-fmap tailDeltaM (deltaM d)))) ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-mu (deltaM-fmap (deltaM-fmap tailDeltaM) (deltaM-fmap tailDeltaM (deltaM d)))))))
+
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                                 (unDeltaM {monadM = mm} (deltaM-mu de))))
+           (sym (deltaM-mu-is-nt tailDeltaM (deltaM-fmap tailDeltaM (deltaM d)))) ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d)))))))
+  ≡⟨ cong (\de -> deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                                 (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM de)))))
+           (sym (deconstruct-id (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d))))) ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (mu mm (fmap fm headDeltaM x))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM 
+                  (deltaM (unDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d)))))))))
+
+
+  ≡⟨ refl ⟩
+  deltaM (delta (mu mm (fmap fm headDeltaM (headDeltaM {monadM = mm} ((deltaM (delta (mu mm (fmap fm headDeltaM x))
+                           (unDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d))))))))))
+                (unDeltaM {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM ((deltaM (delta (mu mm (fmap fm headDeltaM x))
+                           (unDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d))))))))))))
+
+
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta (mu mm (fmap fm headDeltaM x))
+                           (unDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM d))))))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM (delta (mu mm (fmap fm headDeltaM (headDeltaM {monadM = mm} (deltaM (delta x d)))))
+                           (unDeltaM {A = DeltaM M A (S (S n))} {monadM = mm} (deltaM-mu (deltaM-fmap tailDeltaM (tailDeltaM (deltaM (delta x d))))))))
+  ≡⟨ refl ⟩
+  deltaM-mu (deltaM-mu (deltaM (delta x d)))
+  ∎
 {-
 deltaM-association-law {l} {A} {S n} M fm mm (deltaM (delta x d)) = begin
   deltaM-mu (deltaM-fmap deltaM-mu (deltaM (delta x d))) ≡⟨ refl ⟩
@@ -340,6 +439,6 @@ deltaM-is-monad {l} {A} {n} {M} functorM monadM =
                          left-unity-law  = deltaM-left-unity-law;
                          right-unity-law = (\x -> (sym (deltaM-right-unity-law x))) ;
                          eta-is-nt = deltaM-eta-is-nt;
-                         mu-is-nt = {!!}}
+                         mu-is-nt = (\f x -> (sym (deltaM-mu-is-nt f x)))}
 
 
