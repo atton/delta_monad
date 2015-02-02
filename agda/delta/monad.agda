@@ -144,8 +144,6 @@ delta-left-unity-law {n = (S n)} (delta x d) = begin
 delta-is-monad : {l : Level} {n : Nat} -> Monad {l} (\A -> Delta A (S n))  delta-is-functor
 delta-is-monad = record { eta    = delta-eta;
                           mu     = delta-mu;
-                          return = delta-eta;
-                          bind   = delta-bind;
                           eta-is-nt = delta-eta-is-nt;
                           mu-is-nt = delta-mu-is-nt;
                           association-law = monad-law-1;
