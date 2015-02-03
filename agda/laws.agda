@@ -7,10 +7,12 @@ module laws where
 record Functor {l : Level} (F : Set l -> Set l) : Set (suc l) where
   field
     fmap : {A B : Set l} -> (A -> B) -> (F A) -> (F B)
-  field
+  field -- laws
     preserve-id : {A : Set l} (x : F A) → fmap id x ≡ id x
     covariant   : {A B C : Set l} (f : A -> B) -> (g : B -> C) -> (x : F A)
                     -> fmap (g ∙ f) x ≡ ((fmap g) ∙ (fmap f)) x
+  field -- proof assistant
+    fmap-equiv : {A B : Set l} {f g : A -> B} -> ((x : A) -> f x ≡ g x) -> (fx : F A) -> fmap f fx ≡ fmap g fx
 open Functor
 
 record NaturalTransformation {l : Level} (F G : Set l -> Set l)

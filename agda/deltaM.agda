@@ -57,7 +57,7 @@ open Functor
 deltaM-fmap : {l : Level} {A B : Set l} {n : Nat}
               {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
               (A -> B) -> DeltaM M A (S n) -> DeltaM M B (S n)
-deltaM-fmap {l} {A} {B} {n} {M} {functorM} f (deltaM d) = deltaM (fmap delta-is-functor (fmap functorM f) d)
+deltaM-fmap {l} {A} {B} {n} {M} {functorM} f d = deltaM (fmap delta-is-functor (fmap functorM f) (unDeltaM d))
 
 
 
