@@ -75,7 +75,7 @@ deltaM-covariant {F = F} f g (deltaM (delta x d)) = begin
   (deltaM-fmap f ∙ deltaM-fmap g) (deltaM (delta x d))
   ∎
 
-deltaM-fmap-equiv : {l : Level} {A B : Set l} {n : Nat} 
+deltaM-fmap-equiv : {l : Level} {A B : Set l} {n : Nat}
                     {T : Set l -> Set l} {F : Functor T} {M : Monad T F}
                     {f g : A -> B}
                     (eq : (x : A) -> f x ≡ g x) -> (d : DeltaM M A (S n)) ->
@@ -104,5 +104,3 @@ deltaM-is-functor {F = F} = record { fmap         = deltaM-fmap
                                    ; covariant    = (\f g -> deltaM-covariant {F = F} g f)
                                    ; fmap-equiv   = deltaM-fmap-equiv
                                    }
-
-

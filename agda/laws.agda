@@ -1,5 +1,6 @@
 open import Relation.Binary.PropositionalEquality
 open import Level
+
 open import basic
 
 module laws where

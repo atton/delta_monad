@@ -32,27 +32,13 @@ headDeltaM-with-f : {l : Level} {A B : Set l} {n : Nat}
 headDeltaM-with-f {n = O} f   (deltaM (mono x))    = refl
 headDeltaM-with-f {n = S n} f (deltaM (delta x d)) = refl
 
+
 tailDeltaM-with-f : {l : Level} {A B : Set l} {n : Nat}
                     {T : Set l -> Set l} {F : Functor T} {M : Monad T F}
                     (f : A -> B) -> (d : (DeltaM M A (S (S n)))) ->
                     (tailDeltaM ∙ (deltaM-fmap f)) d ≡ ((deltaM-fmap f) ∙ tailDeltaM) d
 tailDeltaM-with-f {n = O} f (deltaM (delta x d))   = refl
 tailDeltaM-with-f {n = S n} f (deltaM (delta x d)) = refl
-
-headDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
-                             {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
-                             (x : DeltaM M A (S n)) ->
-                             ((headDeltaM {n = n} {M = M}) ∙ deltaM-eta) x ≡ eta M x
-headDeltaM-with-deltaM-eta {n = O} (deltaM (mono x))      = refl
-headDeltaM-with-deltaM-eta {n = S n} (deltaM (delta x d)) = refl
-
-
-fmap-tailDeltaM-with-deltaM-eta : {l : Level} {A : Set l} {n : Nat}
-                                  {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
-                                  (d : DeltaM M A (S n)) ->
-        deltaM-fmap ((tailDeltaM {n = n} {M = M} ) ∙ deltaM-eta) d ≡ deltaM-fmap (deltaM-eta) d
-fmap-tailDeltaM-with-deltaM-eta {n = O}   d = refl
-fmap-tailDeltaM-with-deltaM-eta {n = S n} d = refl
 
 
 
@@ -455,7 +441,3 @@ deltaM-is-monad {l} {A} {n} {T} {F} {M} =
                        ; left-unity-law  = deltaM-left-unity-law
                        ; right-unity-law = (\x -> (sym (deltaM-right-unity-law x)))
                        }
-
-
-
-

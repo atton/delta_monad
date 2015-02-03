@@ -1,13 +1,12 @@
+open import Level
+open import Relation.Binary.PropositionalEquality
+open ≡-Reasoning
+
 open import basic
 open import delta
 open import delta.functor
 open import nat
 open import laws
-
-
-open import Level
-open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning
 
 module delta.monad where
 
@@ -87,15 +86,15 @@ delta-fmap-mu-to-tail (S n) (S n₁) (delta (delta (delta x (delta xx d)) (delta
 
 
 -- Monad-laws (Category)
--- monad-law-1 : join . delta-fmap join = join . join
-monad-law-1 : {l : Level} {A : Set l} {n : Nat} (d : Delta (Delta (Delta A (S n)) (S n)) (S n)) ->
+-- association-law : join . delta-fmap join = join . join
+delta-association-law : {l : Level} {A : Set l} {n : Nat} (d : Delta (Delta (Delta A (S n)) (S n)) (S n)) ->
               ((delta-mu ∙ (delta-fmap delta-mu)) d) ≡ ((delta-mu ∙ delta-mu) d)
-monad-law-1 {n =       O} (mono d)                          = refl
-monad-law-1 {n = S n} (delta (delta (delta x d) dd) ds) = begin
+delta-association-law {n =       O} (mono d)                          = refl
+delta-association-law {n = S n} (delta (delta (delta x d) dd) ds) = begin
   delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds)))
   ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-fmap-mu-to-tail n n ds) ⟩
   delta x (delta-mu (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
-  ≡⟨ cong (\de -> delta x de) (monad-law-1 (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))) ⟩
+  ≡⟨ cong (\de -> delta x de) (delta-association-law (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))) ⟩
   delta x (delta-mu (delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds))))
   ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-mu-is-nt tailDelta (delta-fmap tailDelta ds) ) ⟩
   delta x (delta-mu (delta-fmap tailDelta (delta-mu (delta-fmap tailDelta ds))))
@@ -133,7 +132,7 @@ delta-left-unity-law {n = (S n)} (delta x d) = begin
   delta-mu (delta (delta-eta x) (delta-fmap delta-eta d))  ≡⟨ refl ⟩
   delta (headDelta {n = S n} (delta-eta x)) (delta-mu (delta-fmap tailDelta (delta-fmap delta-eta d)))  ≡⟨ refl ⟩
   delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-eta d)))
-  ≡⟨ cong (\de -> delta x (delta-mu de)) (sym (functor-law-2 tailDelta delta-eta d)) ⟩
+  ≡⟨ cong (\de -> delta x (delta-mu de)) (sym (delta-covariant tailDelta delta-eta d)) ⟩
   delta x (delta-mu (delta-fmap (tailDelta ∙ delta-eta {n = S n}) d))  ≡⟨ refl ⟩
   delta x (delta-mu (delta-fmap (delta-eta {n = n}) d))  ≡⟨ cong (\de -> delta x de) (delta-left-unity-law d) ⟩
   delta x d ≡⟨ refl ⟩
@@ -146,7 +145,7 @@ delta-is-monad = record { eta    = delta-eta;
                           mu     = delta-mu;
                           eta-is-nt = delta-eta-is-nt;
                           mu-is-nt = delta-mu-is-nt;
-                          association-law = monad-law-1;
+                          association-law = delta-association-law;
                           left-unity-law  = delta-left-unity-law ;
                           right-unity-law = \x -> (sym (delta-right-unity-law x)) }
 
