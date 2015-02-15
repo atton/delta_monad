@@ -25,22 +25,22 @@ deltaWithLogFromList xs = DeltaM $ deltaFromList $ fmap returnW xs
 
 
 -- example : prime filter
--- usage   : runWriter $ checkOut 0 $ primeCountM 30  -- run specific version
---         : dmap runWriter $ primeCountM 30          -- run all version
+-- usage   : runWriter $ checkOut 0 $ numberCountM 30  -- run specific version
+--         : dmap runWriter $ numberCountM 30          -- run all version
 
 generatorM :: Int -> DeltaWithLog [Int]
 generatorM x = let intList = [1..x] in
                              DeltaM $ deltaFromList $ fmap returnW $ replicate 2 intList
 
-primeFilterM :: [Int] -> DeltaWithLog [Int]
-primeFilterM xs = let primeList    = filter isPrime xs
-                      refactorList = filter even xs    in
-                      DeltaM $ deltaFromList $ fmap returnW [primeList, refactorList]
+numberFilterM :: [Int] -> DeltaWithLog [Int]
+numberFilterM xs = let primeList = filter isPrime xs
+                       evenList  = filter even xs    in
+                      DeltaM $ deltaFromList $ fmap returnW [primeList, evenList]
 
 
 countM :: [Int] -> DeltaWithLog Int
-countM xs = let primeCount = length xs in
-                DeltaM $ deltaFromList $ fmap returnW $ replicate 2 primeCount
+countM xs = let numberCount = length xs in
+                DeltaM $ deltaFromList $ fmap returnW $ replicate 2 numberCount
 
-primeCountM :: Int -> DeltaWithLog Int
-primeCountM x = generatorM x >>= primeFilterM >>= countM
+numberCountM :: Int -> DeltaWithLog Int
+numberCountM x = generatorM x >>= numberFilterM >>= countM
