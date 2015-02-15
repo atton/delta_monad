@@ -69,10 +69,10 @@ delta-fmap-mu-to-tail (S n) O (delta (delta (delta x (mono xx)) (mono (delta dx 
     (delta-fmap delta-mu
      (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta ds)))
   ∎
-delta-fmap-mu-to-tail (S n) (S n₁) (delta (delta (delta x (delta xx d)) (delta (delta dx (delta dxx dd)) ds)) dds) = begin
+delta-fmap-mu-to-tail (S n) (S m) (delta (delta (delta x (delta xx d)) (delta (delta dx (delta dxx dd)) ds)) dds) = begin
   delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds))))
     (delta-fmap tailDelta (delta-fmap delta-mu dds))
-  ≡⟨ cong (\de -> delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds)))) de) (delta-fmap-mu-to-tail n (S n₁) dds) ⟩
+  ≡⟨ cong (\de -> delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds)))) de) (delta-fmap-mu-to-tail n (S m) dds) ⟩
   delta (delta dxx (delta-mu (delta-fmap tailDelta (delta-fmap tailDelta ds))))
     (delta-fmap delta-mu (delta-fmap (delta-fmap tailDelta) (delta-fmap tailDelta dds)))
   ∎
@@ -83,7 +83,7 @@ delta-fmap-mu-to-tail (S n) (S n₁) (delta (delta (delta x (delta xx d)) (delta
 -- association-law : join . delta-fmap join = join . join
 delta-association-law : {l : Level} {A : Set l} {n : Nat} (d : Delta (Delta (Delta A (S n)) (S n)) (S n)) ->
               ((delta-mu ∙ (delta-fmap delta-mu)) d) ≡ ((delta-mu ∙ delta-mu) d)
-delta-association-law {n =       O} (mono d)                          = refl
+delta-association-law {n =   O} (mono d)                          = refl
 delta-association-law {n = S n} (delta (delta (delta x d) dd) ds) = begin
   delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-mu ds)))
   ≡⟨ cong (\de -> delta x (delta-mu de)) (delta-fmap-mu-to-tail n n ds) ⟩
