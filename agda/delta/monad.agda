@@ -10,11 +10,6 @@ open import laws
 
 module delta.monad where
 
-tailDelta-is-nt : {l : Level} {A B : Set l} {n : Nat}
-                  (f : A -> B) -> (d : Delta A (S (S n))) ->
-                  (tailDelta {n = n} ∙ (delta-fmap f)) d ≡ ((delta-fmap f) ∙ tailDelta {n = n}) d
-tailDelta-is-nt f (delta x d) = refl
-
 
 tailDelta-to-tail-nt : {l : Level} {A B : Set l} (n m  : Nat)
                        (f : A -> B) (d : Delta (Delta A (S (S m))) (S n)) ->
@@ -40,7 +35,6 @@ tailDelta-to-tail-nt (S n) (S m) f (delta (delta x (delta xx d)) ds) = begin
 delta-eta-is-nt : {l : Level} {A B : Set l} -> {n : Nat}
                   (f : A -> B) -> (x : A) -> (delta-eta {n = n} ∙ f) x ≡ delta-fmap f (delta-eta x)
 delta-eta-is-nt {n = O}   f x = refl
-delta-eta-is-nt {n = S O} f x = refl
 delta-eta-is-nt {n = S n} f x = begin
   (delta-eta ∙ f) x                        ≡⟨ refl ⟩
   delta-eta (f x)                          ≡⟨ refl ⟩
