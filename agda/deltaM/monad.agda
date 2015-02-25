@@ -177,19 +177,19 @@ deltaM-mu-is-nt {l} {A} {B} {S n} {T} {F} {M} f (deltaM (delta x d)) = begin
 
 
 
-deltaM-right-unity-law : {l : Level} {A : Set l} {n : Nat}
+deltaM-left-unity-law : {l : Level} {A : Set l} {n : Nat}
                          {T : Set l -> Set l} {F : Functor T} {M : Monad T F} ->
                          (d : DeltaM M A (S n)) -> (deltaM-mu ∙ deltaM-eta) d ≡ id d
-deltaM-right-unity-law {l} {A} {O} {M} {fm} {mm} (deltaM (mono x)) = begin
+deltaM-left-unity-law {l} {A} {O} {M} {fm} {mm} (deltaM (mono x)) = begin
   deltaM-mu (deltaM-eta (deltaM (mono x)))             ≡⟨ refl ⟩
   deltaM-mu (deltaM (mono (eta mm (deltaM (mono x))))) ≡⟨ refl ⟩
   deltaM (mono (mu mm (fmap fm (headDeltaM {M = mm})(eta mm (deltaM (mono x))))))
   ≡⟨ cong (\de -> deltaM (mono (mu mm de))) (sym (eta-is-nt mm headDeltaM (deltaM (mono x)) )) ⟩
   deltaM (mono (mu mm (eta mm ((headDeltaM {l} {A} {O} {M} {fm} {mm}) (deltaM (mono x)))))) ≡⟨ refl ⟩
-  deltaM (mono (mu mm (eta mm x))) ≡⟨ cong (\de -> deltaM (mono de)) (sym (right-unity-law mm x)) ⟩
+  deltaM (mono (mu mm (eta mm x))) ≡⟨ cong (\de -> deltaM (mono de)) (sym (left-unity-law mm x)) ⟩
   deltaM (mono x)
   ∎
-deltaM-right-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
+deltaM-left-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM-mu (deltaM-eta (deltaM (delta x d)))
   ≡⟨ refl ⟩
   deltaM-mu (deltaM (delta (eta M (deltaM (delta x d))) (delta-eta (eta M (deltaM (delta x d))))))
@@ -208,7 +208,7 @@ deltaM-right-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM (delta (mu M (eta M x))
                 (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta M (deltaM (delta x d)))))))))
   ≡⟨ cong (\de -> deltaM (delta de (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta M (deltaM (delta x d))))))))))
-           (sym (right-unity-law M x)) ⟩
+           (sym (left-unity-law M x)) ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-eta (eta M (deltaM (delta x d)))))))))
   ≡⟨ refl ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM (delta-fmap (fmap F tailDeltaM) (delta-eta (eta M (deltaM (delta x d)))))))))
@@ -222,7 +222,7 @@ deltaM-right-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM (delta-eta (eta M (deltaM d)))))))
   ≡⟨ refl ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-eta (deltaM d)))))
-  ≡⟨ cong (\de -> deltaM (delta x (unDeltaM {M = M} de))) (deltaM-right-unity-law (deltaM d)) ⟩
+  ≡⟨ cong (\de -> deltaM (delta x (unDeltaM {M = M} de))) (deltaM-left-unity-law (deltaM d)) ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM d)))
   ≡⟨ refl ⟩
   deltaM (delta x d)
@@ -233,10 +233,10 @@ deltaM-right-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
 
 
 
-deltaM-left-unity-law : {l : Level} {A : Set l} {n : Nat}
+deltaM-right-unity-law : {l : Level} {A : Set l} {n : Nat}
                         {T : Set l -> Set l} {F : Functor T} {M : Monad T F}
                         (d : DeltaM M A (S n)) -> (deltaM-mu ∙ (deltaM-fmap deltaM-eta)) d ≡ id d
-deltaM-left-unity-law {l} {A}   {O} {T} {F} {M} (deltaM (mono x)) = begin
+deltaM-right-unity-law {l} {A}   {O} {T} {F} {M} (deltaM (mono x)) = begin
   deltaM-mu (deltaM-fmap deltaM-eta (deltaM (mono x))) ≡⟨ refl ⟩
   deltaM-mu (deltaM (mono (fmap F deltaM-eta x)))      ≡⟨ refl ⟩
   deltaM (mono (mu M (fmap F (headDeltaM {M = M}) (headDeltaM {M = M} (deltaM (mono (fmap F deltaM-eta x)))))))      ≡⟨ refl ⟩
@@ -245,10 +245,10 @@ deltaM-left-unity-law {l} {A}   {O} {T} {F} {M} (deltaM (mono x)) = begin
   deltaM (mono (mu M (fmap F ((headDeltaM {n = O} {M = M}) ∙ deltaM-eta) x)))
   ≡⟨ refl ⟩
   deltaM (mono (mu M (fmap F (eta M) x)))
-  ≡⟨ cong (\de -> deltaM (mono de)) (left-unity-law M x) ⟩
+  ≡⟨ cong (\de -> deltaM (mono de)) (right-unity-law M x) ⟩
   deltaM (mono x)
   ∎
-deltaM-left-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
+deltaM-right-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM-mu (deltaM-fmap deltaM-eta (deltaM (delta x d)))
   ≡⟨ refl ⟩
   deltaM-mu (deltaM (delta (fmap F deltaM-eta x) (delta-fmap (fmap F deltaM-eta) d)))
@@ -266,7 +266,7 @@ deltaM-left-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM (delta (mu M (fmap F (eta M) x))
                 (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap F deltaM-eta) d))))))
   ≡⟨ cong (\de -> deltaM (delta de (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap F deltaM-eta) d)))))))
-           (left-unity-law M x) ⟩
+           (right-unity-law M x) ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-fmap tailDeltaM (deltaM (delta-fmap (fmap F deltaM-eta) d))))))
   ≡⟨ refl ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-fmap (tailDeltaM {n = n})(deltaM-fmap (deltaM-eta {n = S n})(deltaM d))))))
@@ -274,7 +274,7 @@ deltaM-left-unity-law {l} {A} {S n} {T} {F} {M} (deltaM (delta x d)) = begin
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-fmap ((tailDeltaM {n = n}) ∙ (deltaM-eta {n = S n})) (deltaM d)))))
   ≡⟨ refl ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM-mu (deltaM-fmap deltaM-eta (deltaM d)))))
-  ≡⟨ cong (\de -> deltaM (delta x (unDeltaM {M = M} de))) (deltaM-left-unity-law (deltaM d)) ⟩
+  ≡⟨ cong (\de -> deltaM (delta x (unDeltaM {M = M} de))) (deltaM-right-unity-law (deltaM d)) ⟩
   deltaM (delta x (unDeltaM {M = M} (deltaM d)))
   ≡⟨ refl ⟩
   deltaM (delta x d)
@@ -438,6 +438,6 @@ deltaM-is-monad {l} {A} {n} {T} {F} {M} =
                        ; eta-is-nt = deltaM-eta-is-nt
                        ; mu-is-nt = (\f x -> (sym (deltaM-mu-is-nt f x)))
                        ; association-law = deltaM-association-law
-                       ; left-unity-law  = deltaM-left-unity-law
-                       ; right-unity-law = (\x -> (sym (deltaM-right-unity-law x)))
+                       ; right-unity-law  = deltaM-right-unity-law
+                       ; left-unity-law = (\x -> (sym (deltaM-left-unity-law x)))
                        }

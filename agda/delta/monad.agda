@@ -95,9 +95,9 @@ delta-association-law {n = S n} (delta (delta (delta x d) dd) ds) = begin
   ∎
 
 
-delta-right-unity-law : {l : Level} {A : Set l} {n : Nat} (d : Delta A (S n)) -> (delta-mu ∙ delta-eta) d ≡ id d
-delta-right-unity-law (mono x)    = refl
-delta-right-unity-law (delta x d) = begin
+delta-left-unity-law : {l : Level} {A : Set l} {n : Nat} (d : Delta A (S n)) -> (delta-mu ∙ delta-eta) d ≡ id d
+delta-left-unity-law (mono x)    = refl
+delta-left-unity-law (delta x d) = begin
   (delta-mu ∙ delta-eta) (delta x d)
   ≡⟨ refl ⟩
   delta-mu (delta-eta (delta x d))
@@ -111,16 +111,16 @@ delta-right-unity-law (delta x d) = begin
   delta x (delta-mu (delta-eta (tailDelta (delta x d))))
   ≡⟨ refl ⟩
   delta x (delta-mu (delta-eta d))
-  ≡⟨ cong (\de -> delta x de) (delta-right-unity-law d) ⟩
+  ≡⟨ cong (\de -> delta x de) (delta-left-unity-law d) ⟩
   delta x d
   ≡⟨ refl ⟩
   id (delta x d)  ∎
 
 
-delta-left-unity-law  : {l : Level} {A : Set l} {n : Nat} -> (d : Delta A (S n)) ->
+delta-right-unity-law  : {l : Level} {A : Set l} {n : Nat} -> (d : Delta A (S n)) ->
                                              (delta-mu  ∙ (delta-fmap delta-eta)) d ≡ id d
-delta-left-unity-law (mono x)    = refl
-delta-left-unity-law {n = (S n)} (delta x d) = begin
+delta-right-unity-law (mono x)    = refl
+delta-right-unity-law {n = (S n)} (delta x d) = begin
   (delta-mu ∙ delta-fmap delta-eta) (delta x d)            ≡⟨ refl ⟩
   delta-mu ( delta-fmap delta-eta (delta x d))             ≡⟨ refl ⟩
   delta-mu (delta (delta-eta x) (delta-fmap delta-eta d))  ≡⟨ refl ⟩
@@ -128,7 +128,7 @@ delta-left-unity-law {n = (S n)} (delta x d) = begin
   delta x (delta-mu (delta-fmap tailDelta (delta-fmap delta-eta d)))
   ≡⟨ cong (\de -> delta x (delta-mu de)) (sym (delta-covariant tailDelta delta-eta d)) ⟩
   delta x (delta-mu (delta-fmap (tailDelta ∙ delta-eta {n = S n}) d))  ≡⟨ refl ⟩
-  delta x (delta-mu (delta-fmap (delta-eta {n = n}) d))  ≡⟨ cong (\de -> delta x de) (delta-left-unity-law d) ⟩
+  delta x (delta-mu (delta-fmap (delta-eta {n = n}) d))  ≡⟨ cong (\de -> delta x de) (delta-right-unity-law d) ⟩
   delta x d ≡⟨ refl ⟩
   id (delta x d)  ∎
 
@@ -140,8 +140,8 @@ delta-is-monad = record { eta    = delta-eta;
                           eta-is-nt = delta-eta-is-nt;
                           mu-is-nt = delta-mu-is-nt;
                           association-law = delta-association-law;
-                          left-unity-law  = delta-left-unity-law ;
-                          right-unity-law = \x -> (sym (delta-right-unity-law x)) }
+                          right-unity-law  = delta-right-unity-law ;
+                          left-unity-law = \x -> (sym (delta-left-unity-law x)) }
 
 
 

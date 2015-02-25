@@ -40,8 +40,8 @@ record Monad {l : Level} (T : Set l -> Set l) (F : Functor T) : Set (suc l)  whe
     mu-is-nt  : {A B : Set l} -> (f : A -> B) -> (x : T (T A)) -> mu (fmap F (fmap F f) x) ≡ fmap F f (mu x)
   field -- category laws
     association-law : {A : Set l} -> (x : (T (T (T A)))) -> (mu ∙ (fmap F mu))  x ≡ (mu ∙ mu) x
-    left-unity-law  : {A : Set l} -> (x : T A)           -> (mu ∙ (fmap F eta)) x ≡ id x
-    right-unity-law : {A : Set l} -> (x : T A)           -> id x ≡ (mu ∙ eta) x
+    right-unity-law  : {A : Set l} -> (x : T A)           -> (mu ∙ (fmap F eta)) x ≡ id x
+    left-unity-law : {A : Set l} -> (x : T A)           -> id x ≡ (mu ∙ eta) x
 
 
 open Monad
