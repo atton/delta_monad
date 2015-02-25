@@ -44,3 +44,44 @@ countM xs = let numberCount = length xs in
 
 numberCountM :: Int -> DeltaWithLog Int
 numberCountM x = generatorM x >>= numberFilterM >>= countM
+
+
+-- example : sort
+
+sort :: [Int] -> DeltaWithLog [Int]
+sort xs = DeltaM $ deltaFromList [ --bubbleSort xs,
+                          singleSort xs,
+                          returnW $ swapPair xs,
+                          identity,
+                          nil
+                        ]
+    where
+        nil = returnW []
+
+        identity = returnW xs
+
+        swapPair  []        = []
+        swapPair  [x]       = [x]
+        swapPair  (x:xx:xs) = (min x xx) : (max x xx) : xs
+
+        singleSort []        = returnW []
+        singleSort xs        = do
+                tell [show xs]
+                res <- do
+                    remanVals <- singleSort $ filter (/= (minimum xs)) xs
+                    return $ (minimum xs) : remanVals
+                tell [ show res ]
+                return res
+
+        bubbleSort []       = returnW []
+        bubbleSort xs       = let
+                minVal  = minimum xs
+                minVals = replicate (length (filter (== minVal) xs)) minVal
+            in
+                do
+                    tell [show xs]
+                    res <- do
+                            remainVals <- bubbleSort $ filter (/= minVal) xs
+                            return $ minVals ++ remainVals
+                    tell [show res]
+                    return res

@@ -20,3 +20,28 @@ count xs = let primeCount = length xs in
 
 numberCount :: Int -> Delta Int
 numberCount x = generator x >>= numberFilter >>= count
+
+sort :: [Int] -> Delta [Int]
+sort xs = deltaFromList [ bubbleSort  xs,
+                          singleSort  xs,
+                          swapPair    xs,
+                          identity,
+                          nil
+                        ]
+    where
+        nil = []
+        identity = xs
+
+        swapPair  []        = []
+        swapPair  [x]       = [x]
+        swapPair  (x:xx:xs) = (min x xx) : (max x xx) : xs
+
+        singleSort []        = []
+        singleSort xs        = (minimum xs) : (singleSort (filter (/= (minimum xs)) xs))
+
+        bubbleSort []       = []
+        bubbleSort xs       = let
+                minVal  = minimum xs
+                minVals = replicate (length (filter (== minVal) xs)) minVal
+            in
+                minVals ++ (bubbleSort (filter (/= (minimum xs)) xs))
